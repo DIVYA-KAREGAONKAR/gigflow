@@ -3,14 +3,26 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 require("dotenv").config();
+const app = express();
 
+
+app.use(express.json());
+app.use(cookieParser());
+
+app.use(
+  cors({
+    origin: "http://localhost:5173", // frontend URL
+    credentials: true,               // 🔥 allow cookies
+  })
+);
+
+// routes below
 
 const authRoutes = require("./routes/authRoutes");
 const gigRoutes = require("./routes/gigRoutes");
 const bidRoutes = require("./routes/bidRoutes");
 
 
-const app = express();
 
 
 app.use(express.json());

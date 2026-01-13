@@ -13,8 +13,44 @@ res.json(bid);
 
 
 router.get("/:gigId", auth, async (req, res) => {
-const bids = await Bid.find({ gigId: req.params.gigId });
-res.json(bids);
+  try {
+    const gig = await Gig.findById(req.params.gigId);
+
+    if (!gig) {
+      return res.status(404).json({ message: "Gig not found" });
+    }
+
+    // 🔐 OWNER CHECK (CLIENT ONLY)
+    if (gig.owner.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const bids = await Bid.find({ gigId: gig._id })
+      .populate("freelancerId", "name email");
+
+    res.json(bids);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET bids for a gig (ONLY OWNER)
+router.get("/gig/:gigId", auth, async (req, res) => {
+  const gig = await Gig.findById(req.params.gigId);
+
+  if (!gig) {
+    return res.status(404).json({ message: "Gig not found" });
+  }
+
+  // ❌ Block freelancers
+  if (gig.owner.toString() !== req.user.id) {
+    return res.status(403).json({ message: "Access denied" });
+  }
+
+  const bids = await Bid.find({ gigId: gig._id })
+    .populate("freelancerId", "name email");
+
+  res.json(bids);
 });
 
 

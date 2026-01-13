@@ -1,8 +1,10 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-
+/* Since v4 automatically detects your files, 
+   you often don't even need the tailwind.config.js anymore. 
+   But if you want to keep your custom config, add this:
+*/
+@config "../tailwind.config.js";
 /*:root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

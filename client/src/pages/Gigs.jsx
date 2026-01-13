@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
 import api from "../utils/axios";
 import Navbar from "../components/Navbar";
+import { Link } from "react-router-dom";
 
 export default function Gigs() {
   const [gigs, setGigs] = useState([]);
 
   useEffect(() => {
-    api.get("/api/gigs").then(res => setGigs(res.data));
+    api
+      .get("/gigs")
+      .then((res) => setGigs(res.data))
+      .catch((err) => console.error(err));
   }, []);
 
   return (
@@ -22,7 +26,7 @@ export default function Gigs() {
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {gigs.map(gig => (
+          {gigs.map((gig) => (
             <div
               key={gig._id}
               className="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition"
@@ -40,9 +44,12 @@ export default function Gigs() {
                   ₹{gig.budget}
                 </span>
 
-                <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
+                <Link
+                  to={`/gigs/${gig._id}`}
+                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+                >
                   View & Bid
-                </button>
+                </Link>
               </div>
             </div>
           ))}

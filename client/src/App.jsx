@@ -3,14 +3,25 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Gigs from "./pages/Gigs";
 import Login from "./pages/Login";
+import './index.css';
+import GigDetails from "./pages/GigDetails";
+import GigBids from "./pages/GigBids";
+
+import ViewBids from "./pages/ViewBids";
+import Register from "./pages/Register";
+
+
 
 export default function App() {
   return (
-    <BrowserRouter>
+    
       <Routes>
         <Route path="/" element={<Gigs />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/gigs/:id" element={<GigDetails />} />
+        <Route path="/gigs/:gigId/bids" element={<ViewBids />} />
+        <Route path="/gigs/:gigId" element={<GigBids />} />
       </Routes>
-    </BrowserRouter>
   );
 }
