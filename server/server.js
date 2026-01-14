@@ -2,17 +2,31 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const http = require("http"); // Added for Socket.io
-const { Server } = require("socket.io"); // Added for Socket.io
+const http = require("http");
+const { Server } = require("socket.io");
 require("dotenv").config();
 
 const app = express();
-const server = http.createServer(app); // ✅ Correct: Wrap express app
+const server = http.createServer(app);
 
-// ✅ Initialize Socket.io
+// ✅ 1. Define Allowed Origins for CORS
+const allowedOrigins = [
+  "http://localhost:5173",          // Local development
+  process.env.CLIENT_URL            // Deployed Frontend URL (from Render env)
+];
+
+// ✅ 2. Initialize Socket.io with dynamic CORS
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or Postman)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   },
 });
@@ -37,13 +51,23 @@ io.on("connection", (socket) => {
   });
 });
 
-// ✅ Attach io to the app so routes can access it via req.app.get("socketio")
 app.set("socketio", io);
 
-// Middleware
+// ✅ 3. Middleware with proper CORS setup
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS Error: Origin not allowed"));
+    }
+  },
+  credentials: true,
+}));
 
 // Route Imports
 const authRoutes = require("./routes/authRoutes");
@@ -57,10 +81,10 @@ app.use("/api/bids", bidRoutes);
 
 // Database Connection
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Connected"))
+  .then(() => console.log("MongoDB Connected to Atlas"))
   .catch((err) => console.log("DB Connection Error:", err));
 
-// ✅ CRITICAL CHANGE: Use server.listen, NOT app.listen
+// Start Server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
