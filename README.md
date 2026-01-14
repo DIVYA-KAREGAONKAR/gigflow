@@ -5,7 +5,7 @@ GigFlow is a full-stack platform designed to connect clients and freelancers. It
 ## 🔗 Project Links
 - **Live Frontend:** https://gigflow-1-2m8k.onrender.com/
 - **Live Backend:** https://gigflow-dzfl.onrender.com/
-- **Loom Demo Video:** [Paste your Loom Video Link here]
+- **Loom Demo Video:** [\[Paste your Loom Video Link here\]](https://youtube.com/shorts/pw_XIa-eLW8?si=FiQIcqTpnd0qUiHh)
 
 ## ✨ Core Features
 - **Secure Authentication:** Implements JWT-based authentication using HTTP-only, Secure, and SameSite:None cookies for secure cross-site data transfer.
