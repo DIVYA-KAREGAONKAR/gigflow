@@ -85,8 +85,15 @@ router.post("/login", async (req, res) => {
       httpOnly: true,
       sameSite: "lax",
     });
-
-    res.json({ message: "Logged in" });
+res.json({ 
+      message: "Logged in",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role // This allows the Navbar to see you are a client
+      }
+    });
   } catch (err) {
     console.error("LOGIN ERROR:", err);
     res.status(500).json({ message: "Login failed" });

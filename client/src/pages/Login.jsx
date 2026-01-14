@@ -8,8 +8,22 @@ export default function Login() {
 
   const submit = async (e) => {
     e.preventDefault();
-    await api.post("/auth/login", form);
-    navigate("/");
+    try {
+      // ✅ FIX: You must define 'const res' here so it can be used below
+      const res = await api.post("/auth/login", form);
+
+      // ✅ FIX: Now 'res' is defined and we can access the user data
+      if (res.data && res.data.user) {
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+        
+        // Redirect and refresh to update the Navbar immediately
+        navigate("/");
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      alert(err.response?.data?.message || "Login failed");
+    }
   };
 
   return (
@@ -22,8 +36,10 @@ export default function Login() {
 
         <input
           placeholder="Email"
+          type="email"
           className="w-full border p-2 rounded"
           onChange={(e) => setForm({ ...form, email: e.target.value })}
+          required
         />
 
         <input
@@ -31,6 +47,7 @@ export default function Login() {
           type="password"
           className="w-full border p-2 rounded"
           onChange={(e) => setForm({ ...form, password: e.target.value })}
+          required
         />
 
         <button className="w-full bg-indigo-600 text-white py-2 rounded">
