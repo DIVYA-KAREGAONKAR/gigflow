@@ -11,10 +11,13 @@ export default function Navbar() {
     if (user && (user._id || user.id)) {
       const userId = user._id || user.id;
       
-      // ✅ Use Backend URL from Env or default to localhost
-      const socket = io(import.meta.env.VITE_SOCKET_URL || "http://localhost:5000", {
+      // ✅ FIX: Enhanced Connection settings for Render
+      const socket = io(import.meta.env.VITE_SOCKET_URL || "https://gigflow-dzfl.onrender.com", {
         withCredentials: true,
-        transports: ["polling", "websocket"] // Better compatibility for Render
+        transports: ["polling", "websocket"], // Always start with polling on Render
+        upgrade: true,
+        reconnection: true,
+        reconnectionAttempts: 5
       });
 
       socket.on("connect", () => {
@@ -22,9 +25,12 @@ export default function Navbar() {
         socket.emit("register", userId);
       });
 
-      // ✅ Listen for the specific notification
+      // ✅ FIX: Catch connection errors for debugging
+      socket.on("connect_error", (err) => {
+        console.error("Socket Connection Error:", err.message);
+      });
+
       socket.on("notification", (data) => {
-        console.log("Received Notification:", data);
         toast.success(data.message, {
           duration: 8000,
           position: "top-center",
