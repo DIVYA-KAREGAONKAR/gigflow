@@ -21,10 +21,18 @@ router.get("/:id", async (req, res) => {
 
 
 router.post("/", auth, async (req, res) => {
-const gig = await Gig.create({ ...req.body, ownerId: req.user.id });
-res.json(gig);
+  try {
+    // req.user.id comes from your authMiddleware decoding the cookie
+    const gig = await Gig.create({ 
+      ...req.body, 
+      ownerId: req.user.id 
+    });
+    res.status(201).json(gig);
+  } catch (err) {
+    console.error("GIG POST ERROR:", err);
+    res.status(500).json({ message: "Failed to create gig" });
+  }
 });
-
 
 
 module.exports = router;

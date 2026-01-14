@@ -8,7 +8,9 @@ require("dotenv").config();
 
 const app = express();
 const server = http.createServer(app);
-
+// ✅ 3. Middleware with proper CORS setup
+app.use(express.json());
+app.use(cookieParser());
 // ✅ 1. Define Allowed Origins for CORS
 const allowedOrigins = [
   "http://localhost:5173",          // Local development
@@ -53,9 +55,7 @@ io.on("connection", (socket) => {
 
 app.set("socketio", io);
 
-// ✅ 3. Middleware with proper CORS setup
-app.use(express.json());
-app.use(cookieParser());
+
 
 app.use(cors({
   origin: function (origin, callback) {
