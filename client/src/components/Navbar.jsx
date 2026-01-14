@@ -12,8 +12,11 @@ export default function Navbar() {
     if (user && (user._id || user.id)) {
       const userId = user._id || user.id;
       
-      // Connect to your backend
-      const socket = io("http://localhost:5000");
+      // ✅ Use environment variable for the URL (Render or Localhost)
+      // ✅ Add withCredentials: true to allow cookies over Socket.io
+      const socket = io(import.meta.env.VITE_SOCKET_URL || "http://localhost:5000", {
+        withCredentials: true,
+      });
 
       // Register this user's ID to receive private notifications
       socket.emit("register", userId);
@@ -31,13 +34,18 @@ export default function Navbar() {
         });
       });
 
-      // Cleanup: disconnect when the component unmounts or user logs out
-      return () => socket.disconnect();
+      // Cleanup: disconnect when the component unmounts
+      return () => {
+        socket.off("notification"); // Remove listener before disconnecting
+        socket.disconnect();
+      };
     }
   }, [user]);
 
   const logout = () => {
     localStorage.removeItem("user");
+    // If you have a logout endpoint on the backend, you should call it here 
+    // to clear the HTTP-only cookie as well.
     navigate("/login");
     window.location.reload();
   };
@@ -58,7 +66,7 @@ export default function Navbar() {
                 Post a Gig
               </Link>
             )}
-            <button onClick={logout} className="text-red-500">Logout</button>
+            <button onClick={logout} className="text-red-500 font-medium ml-4">Logout</button>
           </>
         ) : (
           <>
