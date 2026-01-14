@@ -57,47 +57,35 @@ router.post("/register", async (req, res) => {
 /* =====================
    LOGIN
 ===================== */
+/* =====================
+   LOGIN (Updated)
+===================== */
 router.post("/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
+  // ... (keep your existing user finding and bcrypt logic)
 
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email & password required" });
+  const token = jwt.sign(
+    { id: user._id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+
+  // ✅ CRITICAL CHANGES FOR PRODUCTION
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: true,      // Required for HTTPS on Render
+    sameSite: "none",  // Required for Cross-Site cookie sharing
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  });
+
+  res.json({ 
+    message: "Logged in",
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role 
     }
-
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
-
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) {
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
-
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    res.cookie("token", token, {
-      httpOnly: true,
-      sameSite: "lax",
-    });
-res.json({ 
-      message: "Logged in",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role // This allows the Navbar to see you are a client
-      }
-    });
-  } catch (err) {
-    console.error("LOGIN ERROR:", err);
-    res.status(500).json({ message: "Login failed" });
-  }
+  });
 });
 
 module.exports = router;
