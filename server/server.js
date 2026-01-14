@@ -7,35 +7,45 @@ const { Server } = require("socket.io");
 require("dotenv").config();
 
 const app = express();
+
+// ✅ FIX 1: Trust Proxy (Required for Render/HTTPS cookies)
+app.set("trust proxy", 1); 
+
 const server = http.createServer(app);
-// ✅ 3. Middleware with proper CORS setup
-app.use(express.json());
-app.use(cookieParser());
-// ✅ 1. Define Allowed Origins for CORS
+
+// ✅ Define Allowed Origins
 const allowedOrigins = [
-  "http://localhost:5173",          // Local development
-  process.env.CLIENT_URL            // Deployed Frontend URL (from Render env)
+  "http://localhost:5173",          
+  process.env.CLIENT_URL            
 ];
 
-// ✅ 2. Initialize Socket.io with dynamic CORS
-const io = new Server(server, {
-  cors: {
-    origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps or Postman)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) !== -1) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
+// ✅ FIX 2: Standardize CORS Configuration
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS Error: Origin not allowed"));
+    }
   },
+  credentials: true, // Required for cookies
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+};
+
+// ✅ FIX 3: Initialize Middleware in the CORRECT Order
+app.use(cors(corsOptions)); // CORS must be near the top
+app.use(express.json());
+app.use(cookieParser()); // Must be before routes
+
+// ✅ Initialize Socket.io with the same CORS options
+const io = new Server(server, {
+  cors: corsOptions,
 });
 
-// Store active users
+// Socket.io Logic
 let activeUsers = {};
-
 io.on("connection", (socket) => {
   socket.on("register", (userId) => {
     activeUsers[userId] = socket.id;
@@ -55,20 +65,6 @@ io.on("connection", (socket) => {
 
 app.set("socketio", io);
 
-
-
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error("CORS Error: Origin not allowed"));
-    }
-  },
-  credentials: true,
-}));
-
 // Route Imports
 const authRoutes = require("./routes/authRoutes");
 const gigRoutes = require("./routes/gigRoutes");
@@ -77,6 +73,7 @@ const bidRoutes = require("./routes/bidRoutes");
 // Route Middleware
 app.use("/api/auth", authRoutes);
 app.use("/api/gigs", gigRoutes);
+// Note: Ensure your gigRoutes.js uses the 'auth' middleware for POST requests
 app.use("/api/bids", bidRoutes);
 
 // Database Connection

@@ -25,21 +25,17 @@ router.post("/register", async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
-    // 🔴 Validation
     if (!name || !email || !password || !role) {
       return res.status(400).json({ message: "All fields required" });
     }
 
-    // 🔴 Check existing user
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // 🔴 Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 🔴 Create user
     const user = await User.create({
       name,
       email,
@@ -57,35 +53,56 @@ router.post("/register", async (req, res) => {
 /* =====================
    LOGIN
 ===================== */
-/* =====================
-   LOGIN (Updated)
-===================== */
 router.post("/login", async (req, res) => {
-  // ... (keep your existing user finding and bcrypt logic)
+  try {
+    const { email, password } = req.body;
 
-  const token = jwt.sign(
-    { id: user._id, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: "7d" }
-  );
-
-  // ✅ CRITICAL CHANGES FOR PRODUCTION
-  res.cookie("token", token, {
-    httpOnly: true,
-    secure: true,      // Required for HTTPS on Render
-    sameSite: "none",  // Required for Cross-Site cookie sharing
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  });
-
-  res.json({ 
-    message: "Logged in",
-    user: {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role 
+    // 1. Validation
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email & password required" });
     }
-  });
+
+    // 2. Find User (This was missing in your version!)
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    // 3. Check Password
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    // 4. Create Token
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // 5. Send Cookie (Production settings for Render)
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,      // ✅ Required for HTTPS on Render
+      sameSite: "none",  // ✅ Required for Cross-Site cookie sharing
+      maxAge: 7 * 24 * 60 * 60 * 1000, 
+    });
+
+    // 6. Send Response
+    res.json({ 
+      message: "Logged in",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role 
+      }
+    });
+  } catch (err) {
+    console.error("LOGIN ERROR:", err);
+    res.status(500).json({ message: "Login failed" });
+  }
 });
 
 module.exports = router;
