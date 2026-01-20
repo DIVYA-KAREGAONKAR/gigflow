@@ -5,7 +5,13 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast"; // Utilizing your existing toast library
 
 export default function AddGig() {
-  const [formData, setFormData] = useState({ title: "", description: "", budget: "" });
+  const [formData, setFormData] = useState({ 
+  title: "", 
+  description: "", 
+  budget: "",
+  category: "Development", // Default category
+  isVerifiedClient: true   // Typically handled by auth, but can be passed here
+});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
@@ -65,65 +71,60 @@ export default function AddGig() {
 
         {/* RIGHT PANEL: The Form */}
         <div className="flex-1 bg-slate-50/50 p-6 lg:p-20 flex items-center justify-center">
-          <form 
-            onSubmit={handleSubmit} 
-            className="w-full max-w-xl space-y-8"
-          >
-            {/* INPUT: TITLE */}
-            <div className="group space-y-2">
-              <label className="text-sm font-black text-slate-900 uppercase tracking-tighter italic">01. What is the project name?</label>
-              <input 
-                type="text" 
-                placeholder="Design a Modern Dashboard"
-                required
-                className="w-full bg-transparent border-b-2 border-slate-200 py-4 text-2xl font-bold placeholder:text-slate-300 focus:border-indigo-600 focus:outline-none transition-all"
-                onChange={(e) => setFormData({...formData, title: e.target.value})}
-              />
-            </div>
+          <form onSubmit={handleSubmit} className="bg-white/70 backdrop-blur-xl p-10 rounded-3xl shadow-xl border border-white space-y-6">
+    
+    {/* 01. TITLE */}
+    <div className="group space-y-2">
+      <label className="text-sm font-black text-slate-900 uppercase italic">01. Project Name</label>
+      <input 
+        type="text" 
+        required
+        className="w-full bg-transparent border-b-2 border-slate-200 py-4 text-2xl font-bold focus:border-indigo-600 outline-none transition-all"
+        onChange={(e) => setFormData({...formData, title: e.target.value})}
+      />
+    </div>
 
-            {/* INPUT: DESCRIPTION */}
-            <div className="group space-y-2">
-              <label className="text-sm font-black text-slate-900 uppercase tracking-tighter italic">02. Describe the requirements</label>
-              <textarea 
-                required 
-                rows="3"
-                placeholder="We need a React developer to build..."
-                className="w-full bg-white border border-slate-200 p-6 rounded-2xl text-lg text-slate-700 shadow-sm focus:ring-0 focus:border-indigo-600 focus:outline-none transition-all resize-none"
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
-              />
-            </div>
+    {/* NEW: 02. CATEGORY SELECT */}
+    <div className="group space-y-2">
+      <label className="text-sm font-black text-slate-900 uppercase italic">02. Industry Category</label>
+      <select 
+        className="w-full bg-white border border-slate-200 p-4 rounded-2xl text-lg font-bold text-slate-700 focus:border-indigo-600 outline-none transition-all appearance-none cursor-pointer"
+        onChange={(e) => setFormData({...formData, category: e.target.value})}
+      >
+        <option value="Development">Development</option>
+        <option value="Design">Design</option>
+        <option value="Marketing">Marketing</option>
+        <option value="AI / ML">AI / ML</option>
+      </select>
+    </div>
 
-            {/* INPUT: BUDGET */}
-            <div className="group space-y-2">
-              <label className="text-sm font-black text-slate-900 uppercase tracking-tighter italic">03. Estimated Budget</label>
-              <div className="relative flex items-center">
-                <span className="absolute left-6 text-2xl font-bold text-slate-400 font-serif italic">₹</span>
-                <input 
-                  type="number" 
-                  required
-                  placeholder="5000"
-                  className="w-full bg-white border border-slate-200 p-6 pl-14 rounded-2xl text-2xl font-black text-slate-900 focus:border-indigo-600 focus:outline-none transition-all"
-                  onChange={(e) => setFormData({...formData, budget: e.target.value})}
-                />
-              </div>
-            </div>
+    {/* 03. DESCRIPTION */}
+    <div className="group space-y-2">
+      <label className="text-sm font-black text-slate-900 uppercase italic">03. Requirements</label>
+      <textarea 
+        required 
+        rows="3"
+        className="w-full bg-white border border-slate-200 p-6 rounded-2xl text-lg shadow-sm focus:border-indigo-600 outline-none transition-all"
+        onChange={(e) => setFormData({...formData, description: e.target.value})}
+      />
+    </div>
 
-            {/* ACTION BUTTON */}
-            <button 
-              type="submit" 
-              disabled={isSubmitting}
-              className="group relative w-full bg-slate-900 text-white font-black py-6 rounded-2xl overflow-hidden shadow-2xl hover:bg-indigo-600 active:scale-[0.97] transition-all disabled:opacity-50"
-            >
-              <span className="relative z-10 flex items-center justify-center gap-2 text-lg">
-                {isSubmitting ? "Syncing to Cloud..." : "Deploy Project Listing"}
-                {!isSubmitting && <span className="group-hover:translate-x-1 transition-transform">→</span>}
-              </span>
-            </button>
-            
-            <p className="text-center text-slate-400 text-xs font-bold uppercase tracking-widest">
-              Secure Payments • 24/7 Support • Verified Experts
-            </p>
-          </form>
+    {/* 04. BUDGET */}
+    <div className="group space-y-2">
+      <label className="text-sm font-black text-slate-900 uppercase italic">04. Budget (₹)</label>
+      <div className="relative flex items-center">
+        <span className="absolute left-6 text-2xl font-bold text-slate-400 italic">₹</span>
+        <input 
+          type="number" 
+          required
+          className="w-full bg-white border border-slate-200 p-6 pl-14 rounded-2xl text-2xl font-black focus:border-indigo-600 outline-none transition-all"
+          onChange={(e) => setFormData({...formData, budget: e.target.value})}
+        />
+      </div>
+    </div>
+
+    <button type="submit" className="...">Deploy Project</button>
+  </form>
         </div>
 
       </div>
