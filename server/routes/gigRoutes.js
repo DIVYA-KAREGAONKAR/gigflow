@@ -35,21 +35,26 @@ router.post("/", auth, async (req, res) => {
 });
 
 
+// server/routes/gigs.js
 router.get("/", async (req, res) => {
   const { search, min, max, verified, cats } = req.query;
   let mongoQuery = {};
 
   if (search) mongoQuery.title = { $regex: search, $options: "i" };
+  
+  // Logic for Budget Filtering
   if (min || max) {
     mongoQuery.budget = {};
     if (min) mongoQuery.budget.$gte = Number(min);
     if (max) mongoQuery.budget.$lte = Number(max);
   }
-  if (verified === "true") mongoQuery.isVerified = true;
-  if (cats) mongoQuery.category = { $in: cats.split(',') };
+
+  // Logic for Category Filtering
+  if (cats) {
+    mongoQuery.category = { $in: cats.split(',') };
+  }
 
   const results = await Gig.find(mongoQuery);
   res.json(results);
 });
-
 module.exports = router;

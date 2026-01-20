@@ -31,20 +31,6 @@ useEffect(() => {
   return () => clearTimeout(debounce);
 }, [searchTerm, filters]);
 
-  useEffect(() => {
-    const fetchGigs = async () => {
-      try {
-        const res = await api.get(`/gigs?search=${searchTerm}`);
-        setGigs(res.data);
-      } catch (err) {
-        console.error("Error fetching gigs:", err);
-      }
-    };
-    const delayDebounceFn = setTimeout(() => {
-      fetchGigs();
-    }, 300);
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm]);
 
  return (
   <div className="min-h-screen bg-[#f8fafc] selection:bg-indigo-100">
