@@ -23,77 +23,136 @@ export default function Gigs() {
   }, [searchTerm]);
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] selection:bg-indigo-100">
-      <Navbar />
+  <div className="min-h-screen bg-[#f8fafc] selection:bg-indigo-100">
+    <Navbar />
 
-      <div className="max-w-7xl mx-auto px-8 py-16">
-        {/* HEADER & SEARCH SECTION */}
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-16">
-          <div className="max-w-2xl">
-            <h2 className="text-6xl font-black tracking-tighter text-slate-900 leading-[0.9] mb-4">
-              The <span className="text-indigo-600 italic">Marketplace.</span>
-            </h2>
-            <p className="text-lg text-slate-500 font-medium leading-relaxed">
-              Discover high-value opportunities posted by verified clients worldwide.
-            </p>
-          </div>
-
-          <div className="relative lg:w-96 group">
-            <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <input
-              type="text"
-              placeholder="Search by role or skill..."
-              className="w-full bg-white border border-slate-200 pl-14 pr-6 py-5 rounded-[2rem] outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-600 transition-all font-bold text-slate-700 shadow-sm"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+    <div className="max-w-7xl mx-auto px-8 py-16">
+      {/* HEADER & SEARCH SECTION - Kept at the top for full visibility */}
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-16">
+        <div className="max-w-2xl">
+          <h2 className="text-6xl font-black tracking-tighter text-slate-900 leading-[0.9] mb-4">
+            The <span className="text-indigo-600 italic">Marketplace.</span>
+          </h2>
+          <p className="text-lg text-slate-500 font-medium leading-relaxed">
+            Discover high-value opportunities posted by verified clients worldwide.
+          </p>
         </div>
 
-        {/* GIG GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-          {gigs.length > 0 ? (
-            gigs.map((gig) => (
-              <div key={gig._id} className="group relative bg-white border border-slate-100 p-8 rounded-[2.5rem] hover:shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-2 transition-all duration-500">
-                <div className="flex justify-between items-start mb-6">
-                   <div className="h-12 w-12 bg-slate-50 rounded-2xl flex items-center justify-center text-xl font-black text-slate-300 group-hover:text-indigo-500 transition-colors">
-                     GF
-                   </div>
-                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 italic">Active Now</span>
-                </div>
-
-                <h3 className="text-2xl font-black text-slate-900 leading-tight mb-3 group-hover:text-indigo-600 transition-colors italic">
-                  {gig.title}
-                </h3>
-                <p className="text-slate-500 text-sm leading-relaxed mb-8 line-clamp-3 font-medium">
-                  {gig.description}
-                </p>
-                
-                <div className="flex justify-between items-center pt-8 border-t border-slate-50">
-                  <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Fixed Budget</p>
-                    <p className="text-2xl font-black text-slate-900 tracking-tighter">₹{gig.budget}</p>
-                  </div>
-                  <Link 
-                    to={`/gigs/${gig._id}`} 
-                    className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-lg shadow-slate-200"
-                  >
-                    View Project
-                  </Link>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="col-span-full py-24 text-center border-2 border-dashed border-slate-200 rounded-[3rem] bg-slate-50/50">
-              <p className="text-slate-400 font-black text-sm uppercase tracking-[0.3em]">No Intelligence Found Matching "{searchTerm}"</p>
-            </div>
-          )}
+        <div className="relative lg:w-96 group">
+          <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
+            <svg className="h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <input
+            type="text"
+            placeholder="Search by role or skill..."
+            className="w-full bg-white border border-slate-200 pl-14 pr-6 py-5 rounded-[2rem] outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-600 transition-all font-bold text-slate-700 shadow-sm"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
       </div>
+
+      {/* MAIN CONTENT AREA: Sidebar + Grid */}
+      <div className="flex flex-col lg:flex-row gap-12">
+        
+        {/* LEFT SIDEBAR: FILTERS (Sticky so it stays visible while scrolling) */}
+        <aside className="hidden lg:block w-72 flex-shrink-0 sticky top-24 h-fit">
+          <div className="space-y-12">
+            
+            {/* 01. Category Filter */}
+            <div>
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 italic mb-6">01. Industry</h3>
+              <div className="space-y-4">
+                {["Development", "Design", "Marketing", "AI / ML"].map((cat) => (
+                  <label key={cat} className="flex items-center gap-3 group cursor-pointer">
+                    <input type="checkbox" className="w-5 h-5 rounded-md border-slate-200 text-indigo-600 focus:ring-indigo-500 transition-all cursor-pointer" />
+                    <span className="text-sm font-bold text-slate-600 group-hover:text-indigo-600 transition-colors italic">{cat}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* 02. Budget Range */}
+            <div>
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 italic mb-6">02. Budget Range</h3>
+              <div className="flex gap-4 items-center">
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 italic">₹</span>
+                  <input type="number" placeholder="Min" className="w-full bg-white border border-slate-200 p-3 pl-6 rounded-xl text-xs font-black focus:border-indigo-600 focus:outline-none" />
+                </div>
+                <div className="h-[2px] w-4 bg-slate-200"></div>
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 italic">₹</span>
+                  <input type="number" placeholder="Max" className="w-full bg-white border border-slate-200 p-3 pl-6 rounded-xl text-xs font-black focus:border-indigo-600 focus:outline-none" />
+                </div>
+              </div>
+            </div>
+
+            {/* 03. Client Security Toggle */}
+            <div>
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 italic mb-6">03. Security</h3>
+              <label className="flex items-center justify-between group cursor-pointer">
+                <span className="text-sm font-bold text-slate-600 italic">Verified Only</span>
+                <div className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" className="sr-only peer" />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                </div>
+              </label>
+            </div>
+
+            {/* Reset Action */}
+            <button className="w-full py-4 border-2 border-dashed border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:border-rose-200 hover:text-rose-500 transition-all">
+              Reset Filters
+            </button>
+          </div>
+        </aside>
+
+        {/* RIGHT SIDE: GIG GRID (Occupies remaining space) */}
+        <div className="flex-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {gigs.length > 0 ? (
+              gigs.map((gig) => (
+                <div key={gig._id} className="group relative bg-white border border-slate-100 p-8 rounded-[2.5rem] hover:shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-2 transition-all duration-500">
+                  <div className="flex justify-between items-start mb-6">
+                     <div className="h-12 w-12 bg-slate-50 rounded-2xl flex items-center justify-center text-xl font-black text-slate-300 group-hover:text-indigo-500 transition-colors">
+                       GF
+                     </div>
+                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 italic">Active Now</span>
+                  </div>
+
+                  <h3 className="text-2xl font-black text-slate-900 leading-tight mb-3 group-hover:text-indigo-600 transition-colors italic">
+                    {gig.title}
+                  </h3>
+                  <p className="text-slate-500 text-sm leading-relaxed mb-8 line-clamp-3 font-medium">
+                    {gig.description}
+                  </p>
+                  
+                  <div className="flex justify-between items-center pt-8 border-t border-slate-50">
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Fixed Budget</p>
+                      <p className="text-2xl font-black text-slate-900 tracking-tighter">₹{gig.budget}</p>
+                    </div>
+                    <Link 
+                      to={`/gigs/${gig._id}`} 
+                      className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-lg shadow-slate-200"
+                    >
+                      View
+                    </Link>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="col-span-full py-24 text-center border-2 border-dashed border-slate-200 rounded-[3rem] bg-slate-50/50">
+                <p className="text-slate-400 font-black text-sm uppercase tracking-[0.3em]">No Intelligence Found</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+      </div>
     </div>
-  );
+  </div>
+); 
 }
