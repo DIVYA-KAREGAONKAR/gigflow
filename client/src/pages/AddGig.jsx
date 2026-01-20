@@ -2,91 +2,130 @@ import { useState } from "react";
 import api from "../utils/axios";
 import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast"; // Utilizing your existing toast library
 
 export default function AddGig() {
   const [formData, setFormData] = useState({ title: "", description: "", budget: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     try {
       await api.post("/gigs", formData);
-      alert("Gig posted successfully!"); 
+      toast.success("Project live on the marketplace!"); 
       navigate("/");
     } catch (err) {
-      console.error("Error posting gig:", err);
+      toast.error("Failed to post project.");
+      console.error("Error:", err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    // Switched to a subtle slate gradient background for a more premium feel
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-50 via-gray-100 to-gray-200">
+    <div className="min-h-screen bg-white selection:bg-indigo-100">
       <Navbar />
       
-      <div className="max-w-xl mx-auto py-16 px-6">
-        {/* HEADER SECTION */}
-        <div className="text-center mb-10">
-          <h2 className="text-4xl font-black tracking-tight text-slate-900 mb-2">Create a Gig</h2>
-          <p className="text-slate-500 font-medium">Find the perfect freelancer for your project today.</p>
-        </div>
+      <div className="flex flex-col lg:flex-row min-h-[calc(100vh-64px)]">
         
-        {/* FORM CARD: Added a subtle border and larger rounding */}
-        <form 
-          onSubmit={handleSubmit} 
-          className="bg-white/70 backdrop-blur-xl p-10 rounded-3xl shadow-xl shadow-slate-200/60 border border-white space-y-6"
-        >
-          {/* TITLE INPUT */}
-          <div className="space-y-1.5">
-            <label className="text-xs uppercase tracking-widest font-bold text-slate-500 ml-1">Project Title</label>
-            <input 
-              type="text" 
-              placeholder="e.g. Build a Landing Page"
-              required
-              className="w-full bg-white border border-slate-200 p-4 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 transition-all placeholder:text-slate-400 text-slate-700"
-              onChange={(e) => setFormData({...formData, title: e.target.value})}
-            />
+        {/* LEFT PANEL: Branding & Context */}
+        <div className="lg:w-1/3 bg-slate-900 p-12 lg:p-20 flex flex-col justify-between text-white">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold uppercase tracking-widest mb-8">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+              </span>
+              New Listing
+            </div>
+            <h1 className="text-5xl font-black leading-[1.1] tracking-tighter mb-6">
+              Hire the <span className="text-indigo-400">best</span> in minutes.
+            </h1>
+            <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-sm">
+              Fill out the details and reach thousands of verified freelancers ready to work on your project.
+            </p>
           </div>
 
-          {/* DESCRIPTION INPUT */}
-          <div className="space-y-1.5">
-            <label className="text-xs uppercase tracking-widest font-bold text-slate-500 ml-1">Detailed Description</label>
-            <textarea 
-              required 
-              rows="4"
-              placeholder="Explain the project requirements and deliverables..."
-              className="w-full bg-white border border-slate-200 p-4 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 transition-all placeholder:text-slate-400 text-slate-700 resize-none"
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
-            />
+          <div className="mt-12 lg:mt-0 pt-12 border-t border-slate-800">
+            <div className="flex -space-x-3 mb-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="w-10 h-10 rounded-full border-2 border-slate-900 bg-slate-700 flex items-center justify-center text-[10px] font-bold">
+                  U{i}
+                </div>
+              ))}
+              <div className="w-10 h-10 rounded-full border-2 border-slate-900 bg-indigo-600 flex items-center justify-center text-[10px] font-bold">
+                +2k
+              </div>
+            </div>
+            <p className="text-slate-500 text-sm">Join 2,000+ clients posting daily.</p>
           </div>
+        </div>
 
-          {/* BUDGET INPUT */}
-          <div className="space-y-1.5">
-            <label className="text-xs uppercase tracking-widest font-bold text-slate-500 ml-1">Estimated Budget (₹)</label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+        {/* RIGHT PANEL: The Form */}
+        <div className="flex-1 bg-slate-50/50 p-6 lg:p-20 flex items-center justify-center">
+          <form 
+            onSubmit={handleSubmit} 
+            className="w-full max-w-xl space-y-8"
+          >
+            {/* INPUT: TITLE */}
+            <div className="group space-y-2">
+              <label className="text-sm font-black text-slate-900 uppercase tracking-tighter italic">01. What is the project name?</label>
               <input 
-                type="number" 
+                type="text" 
+                placeholder="Design a Modern Dashboard"
                 required
-                placeholder="0.00"
-                className="w-full bg-white border border-slate-200 p-4 pl-9 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 transition-all text-slate-700 font-semibold"
-                onChange={(e) => setFormData({...formData, budget: e.target.value})}
+                className="w-full bg-transparent border-b-2 border-slate-200 py-4 text-2xl font-bold placeholder:text-slate-300 focus:border-indigo-600 focus:outline-none transition-all"
+                onChange={(e) => setFormData({...formData, title: e.target.value})}
               />
             </div>
-          </div>
 
-          {/* SUBMIT BUTTON: Matches the Navbar primary button style */}
-          <button 
-            type="submit" 
-            className="w-full bg-indigo-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 active:scale-[0.98] transition-all mt-4"
-          >
-            Post Gig Now
-          </button>
-        </form>
+            {/* INPUT: DESCRIPTION */}
+            <div className="group space-y-2">
+              <label className="text-sm font-black text-slate-900 uppercase tracking-tighter italic">02. Describe the requirements</label>
+              <textarea 
+                required 
+                rows="3"
+                placeholder="We need a React developer to build..."
+                className="w-full bg-white border border-slate-200 p-6 rounded-2xl text-lg text-slate-700 shadow-sm focus:ring-0 focus:border-indigo-600 focus:outline-none transition-all resize-none"
+                onChange={(e) => setFormData({...formData, description: e.target.value})}
+              />
+            </div>
 
-        {/* FOOTER HINT */}
-        <p className="text-center text-slate-400 text-xs mt-8 font-medium italic">
-          Tip: Detailed descriptions attract higher quality applications.
-        </p>
+            {/* INPUT: BUDGET */}
+            <div className="group space-y-2">
+              <label className="text-sm font-black text-slate-900 uppercase tracking-tighter italic">03. Estimated Budget</label>
+              <div className="relative flex items-center">
+                <span className="absolute left-6 text-2xl font-bold text-slate-400 font-serif italic">₹</span>
+                <input 
+                  type="number" 
+                  required
+                  placeholder="5000"
+                  className="w-full bg-white border border-slate-200 p-6 pl-14 rounded-2xl text-2xl font-black text-slate-900 focus:border-indigo-600 focus:outline-none transition-all"
+                  onChange={(e) => setFormData({...formData, budget: e.target.value})}
+                />
+              </div>
+            </div>
+
+            {/* ACTION BUTTON */}
+            <button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="group relative w-full bg-slate-900 text-white font-black py-6 rounded-2xl overflow-hidden shadow-2xl hover:bg-indigo-600 active:scale-[0.97] transition-all disabled:opacity-50"
+            >
+              <span className="relative z-10 flex items-center justify-center gap-2 text-lg">
+                {isSubmitting ? "Syncing to Cloud..." : "Deploy Project Listing"}
+                {!isSubmitting && <span className="group-hover:translate-x-1 transition-transform">→</span>}
+              </span>
+            </button>
+            
+            <p className="text-center text-slate-400 text-xs font-bold uppercase tracking-widest">
+              Secure Payments • 24/7 Support • Verified Experts
+            </p>
+          </form>
+        </div>
+
       </div>
     </div>
   );
