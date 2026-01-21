@@ -13,13 +13,16 @@ export default function Workspace() {
   const socket = useRef(null);
 
   useEffect(() => {
-      useEffect(() => {
     const fetchData = async () => {
       try {
         const gigRes = await api.get(`/gigs/${id}`);
         const userRes = await api.get("/auth/me");
+        // FETCH OLD MESSAGES FROM DATABASE
+        const msgRes = await api.get(`/gigs/${id}/messages`);
+        
         setGig(gigRes.data);
         setUser(userRes.data);
+        setMessages(msgRes.data); // Load history
       } catch (err) {
         console.error("Data fetch error", err);
       }
@@ -32,46 +35,22 @@ export default function Workspace() {
       withCredentials: true
     });
 
-    // ✅ JOIN ROOM - Listen for 'connect' event first to ensure we are ready
     socket.current.on("connect", () => {
-      console.log("Connected to Socket Server");
       socket.current.emit("join_workspace", id);
     });
 
-    // ✅ RECEIVE MESSAGE - Listener
+    // RECEIVE MESSAGE - Listener
     socket.current.on("receive_message", (data) => {
-      console.log("New message from server:", data);
-      // Only add if the sender is NOT the current user (to avoid duplicates)
+      // Only add to state if it's from the other person
+      // This prevents the "two times" issue because you already add your own message in sendMessage
       setMessages((prev) => [...prev, data]);
     });
 
     return () => {
-      if (socket.current) socket.current.disconnect();
-    };
-  }, [id]);
-    fetchData();
-
-    // Initialize Socket
-    socket.current = io("https://gigflow-dzfl.onrender.com", {
-      transports: ["websocket", "polling"],
-      withCredentials: true
-    });
-
-    // ✅ JOIN ROOM - Listen for 'connect' event first to ensure we are ready
-    socket.current.on("connect", () => {
-      console.log("Connected to Socket Server");
-      socket.current.emit("join_workspace", id);
-    });
-
-    // ✅ RECEIVE MESSAGE - Listener
-    socket.current.on("receive_message", (data) => {
-      console.log("New message from server:", data);
-      // Only add if the sender is NOT the current user (to avoid duplicates)
-      setMessages((prev) => [...prev, data]);
-    });
-
-    return () => {
-      if (socket.current) socket.current.disconnect();
+      if (socket.current) {
+        socket.current.off("receive_message");
+        socket.current.disconnect();
+      }
     };
   }, [id]);
 
@@ -83,15 +62,15 @@ export default function Workspace() {
 
     const messageData = {
       gigId: id,
-      senderName: user.name, // Ensure this matches 'senderName' in server.js
+      senderName: user.name,
       text: input,
       time: messageTime
     };
 
-    // 1. Send to server
+    // 1. Send to server (server will save to DB and broadcast)
     socket.current.emit("send_message", messageData);
     
-    // 2. Add to local UI (This is the one you see)
+    // 2. Add to local UI (immediately visible to you)
     setMessages((prev) => [...prev, {
       sender: user.name, 
       text: input,
@@ -127,7 +106,9 @@ export default function Workspace() {
               }`}>
                 {msg.text}
               </div>
-              <span className="text-[9px] text-slate-400 font-bold mt-1 uppercase">{msg.sender} • {msg.time}</span>
+              <span className="text-[9px] text-slate-400 font-bold mt-1 uppercase">
+                {msg.sender} • {msg.time}
+              </span>
             </div>
           ))}
         </div>

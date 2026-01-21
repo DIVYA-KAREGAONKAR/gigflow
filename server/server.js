@@ -74,15 +74,29 @@ io.on("connection", (socket) => {
   });
 
   // 03. Handle Real-time Chat Messaging
-  socket.on("send_message", (data) => {
-    // data expected: { gigId, senderName, text, time }
-    // io.to(gigId) ensures only users in this specific project see the chat
-    io.to(data.gigId).emit("receive_message", {
+  // server/server.js
+socket.on("send_message", async (data) => {
+  try {
+    // 1. SAVE TO DATABASE
+    const newMessage = new Message({
+      gigId: data.gigId,
       sender: data.senderName,
       text: data.text,
       time: data.time
     });
-  });
+    await newMessage.save();
+
+    // 2. BROADCAST TO OTHERS IN THE ROOM
+    // socket.to(id) sends to everyone EXCEPT the sender
+    socket.to(data.gigId).emit("receive_message", {
+      sender: data.senderName,
+      text: data.text,
+      time: data.time
+    });
+  } catch (err) {
+    console.error("Msg save error:", err);
+  }
+});
 
   socket.on("disconnect", () => {
     for (let userId in activeUsers) {
