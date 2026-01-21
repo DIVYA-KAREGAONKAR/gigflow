@@ -24,12 +24,14 @@ export default function Workspace() {
     }
   };
   fetchData();
+// CHANGE THIS:
+// socket.current = io("http://localhost:5000"); 
 
-  // 1. Correct Backend URL (Use env variable if possible)
-  socket.current = io("http://localhost:5000", {
-    transports: ["websocket", "polling"],
-    withCredentials: true
-  });
+// TO THIS (Your Render URL):
+socket.current = io("https://gigflow-dzfl.onrender.com", {
+  transports: ["websocket", "polling"],
+  withCredentials: true
+});
 
   // 2. ✅ FIX: Must match Backend 'join_workspace'
   socket.current.emit("join_workspace", id); 
@@ -48,25 +50,19 @@ export default function Workspace() {
 
 const sendMessage = (e) => {
   e.preventDefault();
-  if (!input.trim() || !user) return;
+  if (!input.trim()) return;
 
   const messageData = {
-    gigId: id,          // ✅ FIX: Match Backend 'data.gigId'
-    senderName: user.name, // ✅ FIX: Match Backend 'data.senderName'
+    gigId: id, // Backend expects 'gigId', not 'room'
+    senderName: user.name,
     text: input,
-    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    time: new Date().toLocaleTimeString()
   };
 
-  // 4. ✅ FIX: Send to server
   socket.current.emit("send_message", messageData);
-
-  // Add to local state so sender sees it immediately
-  setMessages((prev) => [...prev, {
-    sender: user.name, // Match the structure used in the map()
-    text: input,
-    time: messageData.time
-  }]);
   
+  // Update local UI
+  setMessages((prev) => [...prev, { sender: user.name, text: input, time: messageData.time }]);
   setInput("");
 };
 
