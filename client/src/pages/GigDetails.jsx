@@ -10,7 +10,42 @@ export default function GigDetails() {
   const [user, setUser] = useState(null);
   const [bid, setBid] = useState({ price: "", message: "" });
   const [loading, setLoading] = useState(false);
+  const [customSkills, setCustomSkills] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
 
+
+  
+  // --- AI LOGIC ---
+  const generateAIProposal = async () => {
+    if (!customSkills) {
+      return toast.error("Please enter some skills for the AI to use!");
+    }
+
+    setIsGenerating(true);
+    try {
+      const res = await api.post("/ai/generate-proposal", {
+        jobDescription: gig.description,
+        userSkills: customSkills
+      });
+      
+      console.log("Gemini Response:", res.data);
+
+      if (res.data && res.data.proposal) {
+        // We use the functional update (prev) to keep the existing 'price'
+        setBid(prev => ({ ...prev, message: res.data.proposal })); 
+        toast.success("AI Proposal Ready!");
+      } else {
+        toast.error("AI returned an empty response.");
+      }
+    } catch (err) {
+      console.error("AI Error:", err);
+      toast.error("AI Generation failed.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // --- DATA FETCHING ---
   useEffect(() => {
     if (id) {
       api.get(`/gigs/${id}`)
@@ -25,6 +60,7 @@ export default function GigDetails() {
       .catch(() => setUser(null));
   }, []);
 
+  // --- SUBMIT PROPOSAL ---
   const submitBid = async (e) => {
     e.preventDefault();
     if (!bid.price || !bid.message) {
@@ -41,6 +77,7 @@ export default function GigDetails() {
       });
       toast.success("Proposal transmitted successfully!");
       setBid({ price: "", message: "" });
+      setCustomSkills(""); // Reset skills field
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to submit bid");
     } finally {
@@ -99,30 +136,27 @@ export default function GigDetails() {
         </div>
 
         {/* RIGHT PANEL: Interaction Area */}
-        <div className="lg:w-2/5 bg-[#f8fafc] p-8 lg:p-20 flex flex-col justify-center">
+        <div className="lg:w-2/5 bg-[#f8fafc] p-8 lg:p-20 flex flex-col justify-center overflow-y-auto">
           
-          {/* CLIENT VIEW: Project Management */}
           {user && gig.ownerId && String(user._id) === String(gig.ownerId) ? (
-            <div className="space-y-8">
-              <div className="text-center lg:text-left">
-                <h2 className="text-3xl font-black text-slate-900 italic mb-4">You own this project.</h2>
-                <p className="text-slate-500 font-medium mb-8">Manage incoming proposals and select the perfect expert.</p>
-                <Link 
-                  to={`/gigs/${gig._id}/bids`} 
-                  className="inline-block w-full bg-slate-900 text-white font-black py-6 rounded-2xl text-center shadow-2xl hover:bg-indigo-600 transition-all uppercase tracking-widest text-sm active:scale-95"
-                >
-                  Analyze All Bids →
-                </Link>
-              </div>
+            <div className="space-y-8 text-center lg:text-left">
+              <h2 className="text-3xl font-black text-slate-900 italic mb-4">You own this project.</h2>
+              <p className="text-slate-500 font-medium mb-8">Manage incoming proposals and select the perfect expert.</p>
+              <Link 
+                to={`/gigs/${gig._id}/bids`} 
+                className="inline-block w-full bg-slate-900 text-white font-black py-6 rounded-2xl text-center shadow-2xl hover:bg-indigo-600 transition-all uppercase tracking-widest text-sm active:scale-95"
+              >
+                Analyze All Bids →
+              </Link>
             </div>
           ) : user?.role === "freelancer" ? (
-            /* FREELANCER VIEW: The Proposal Form */
-            <form onSubmit={submitBid} className="space-y-12">
+            <form onSubmit={submitBid} className="space-y-8">
               <div>
                 <h2 className="text-3xl font-black text-slate-900 italic mb-2 tracking-tighter">Draft Proposal.</h2>
                 <p className="text-slate-500 font-medium">Pitch your expertise and secure the contract.</p>
               </div>
 
+              {/* 01. BUDGET QUOTE */}
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-900 uppercase tracking-tighter italic">01. Your Quote (₹)</label>
                 <div className="relative">
@@ -137,10 +171,35 @@ export default function GigDetails() {
                 </div>
               </div>
 
+              {/* AI PROPOSAL ASSISTANT */}
+              <div className="bg-indigo-50/50 p-6 rounded-3xl border border-indigo-100 space-y-4">
+                <label className="text-[10px] font-black text-indigo-900 uppercase tracking-widest italic flex items-center gap-2">
+                  <span className="text-lg">✨</span> AI Proposal Assistant
+                </label>
+                
+                <input 
+                  type="text"
+                  placeholder="Enter specific skills for this job..."
+                  className="w-full bg-white border border-indigo-100 p-4 rounded-xl text-sm font-bold text-slate-700 focus:border-indigo-600 focus:outline-none shadow-sm transition-all"
+                  value={customSkills}
+                  onChange={(e) => setCustomSkills(e.target.value)}
+                />
+
+                <button
+                  type="button"
+                  onClick={generateAIProposal}
+                  disabled={isGenerating}
+                  className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all disabled:opacity-50 shadow-lg shadow-indigo-100"
+                >
+                  {isGenerating ? <span className="animate-pulse italic text-xs">Synthesizing Intelligence...</span> : "Auto-Generate Pitch"}
+                </button>
+              </div>
+
+              {/* 02. PROPOSAL MESSAGE */}
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-900 uppercase tracking-tighter italic">02. Proposal message</label>
                 <textarea 
-                  placeholder="Tell the client why you're the best fit..." 
+                  placeholder="The AI will help you write this..." 
                   className="w-full bg-white border border-slate-200 p-6 rounded-2xl text-lg font-medium text-slate-700 shadow-sm focus:border-indigo-600 focus:outline-none transition-all resize-none" 
                   rows="5" 
                   value={bid.message} 
@@ -157,7 +216,6 @@ export default function GigDetails() {
               </button>
             </form>
           ) : (
-            /* LOGGED OUT VIEW */
             <div className="text-center p-12 bg-white rounded-[2rem] border border-slate-100 shadow-sm">
               <p className="text-slate-400 font-black uppercase tracking-widest mb-4 italic">Notice</p>
               <p className="text-slate-600 font-bold mb-8">Sign in as a freelancer to interact with this briefing.</p>
@@ -167,7 +225,6 @@ export default function GigDetails() {
             </div>
           )}
         </div>
-
       </div>
     </div>
   );

@@ -34,36 +34,42 @@ router.get("/gig/:gigId", auth, async (req, res) => {
   }
 });
 
-// HIRE FREELANCER (The fixed PATCH route)
+// server/routes/gigs.js (The HIRE route)
 router.patch("/:bidId/hire", auth, async (req, res) => {
   try {
-    // 1. Find bid and populate freelancer info
-    const bid = await Bid.findById(req.params.bidId).populate("freelancerId");
+    // 1. Find the specific bid and gig
+    const bid = await Bid.findById(req.params.bidId);
     if (!bid) return res.status(404).json({ message: "Bid not found" });
 
     const gig = await Gig.findById(bid.gigId);
     if (!gig) return res.status(404).json({ message: "Gig not found" });
 
-    // 2. Security Check
+    // 2. Security Check: Only the gig owner can hire
     if (String(gig.ownerId) !== String(req.user.id)) {
       return res.status(403).json({ message: "Access denied" });
     }
 
-    // 3. Update Statuses
-    gig.status = "assigned";
+    // 3. --- MERGED LOGIC: UPDATE STATUSES ---
+    
+    // A. Update Gig: Change status to 'hired' and store the winner
+    gig.status = "hired"; 
+    gig.hiredFreelancer = bid.freelancerId; // Store the freelancer ID on the gig
     await gig.save();
-    bid.status = "hired";
+
+    // B. Update the Winning Bid: Change to 'accepted'
+    bid.status = "accepted";
     await bid.save();
 
-    // 4. ✅ FIXED REAL-TIME NOTIFICATION
-    const io = req.app.get("socketio");
-    
-    // Check if freelancerId is a populated object or just an ID
-    const freelancerId = bid.freelancerId._id 
-      ? bid.freelancerId._id.toString() 
-      : bid.freelancerId.toString(); 
+    // C. Update Other Bids: Automatically close all other applications
+    // This ensures other freelancers see they weren't selected
+    await Bid.updateMany(
+      { gigId: gig._id, _id: { $ne: bid._id } },
+      { status: "closed" }
+    );
 
-    console.log("Notifying freelancer at room ID:", freelancerId);
+    // 4. REAL-TIME NOTIFICATION (Socket.io)
+    const io = req.app.get("socketio");
+    const freelancerId = bid.freelancerId.toString(); 
 
     if (io) {
       io.to(freelancerId).emit("notification", {
@@ -73,7 +79,13 @@ router.patch("/:bidId/hire", auth, async (req, res) => {
       });
     }
 
-    res.json({ message: "Hired successfully", bid });
+    // 5. Response: Move to Workspace
+    res.json({ 
+      message: "Hired successfully. Project moved to Workspace.", 
+      bid,
+      gigStatus: "hired" 
+    });
+
   } catch (err) {
     console.error("Hire Error:", err);
     res.status(500).json({ error: err.message });

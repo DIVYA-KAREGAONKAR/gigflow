@@ -10,6 +10,7 @@ import GigBids from "./pages/AddGig";
 import ViewBids from "./pages/ViewBids";
 import Register from "./pages/Register";
 import AddGig from "./pages/AddGig";
+import Workspace from "./pages/Workspace";
 
 
 export default function App() {
@@ -22,6 +23,7 @@ export default function App() {
         <Route path="/gigs/:id" element={<GigDetails />} />
         <Route path="/gigs/:gigId/bids" element={<ViewBids />} />
        <Route path="/add-gig" element={<AddGig />} />
+       <Route path="/workspace/:id" element={<Workspace />} />
       </Routes>
   );
 }

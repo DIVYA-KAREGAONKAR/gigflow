@@ -2,47 +2,73 @@ const express = require("express");
 const Gig = require("../models/Gig");
 const auth = require("../middleware/authMiddleware");
 const router = express.Router();
+const mongoose = require("mongoose");
 
-// CONSOLIDATED SEARCH & FILTER ROUTE
+// server/routes/gigs.js
+const jwt = require('jsonwebtoken'); // Ensure you have this to check the token
+
 router.get("/", async (req, res) => {
   try {
     const { search, min, max, verified, cats } = req.query;
     
-    // Always start with "open" status to show available work
-    let mongoQuery = { status: "open" };
+    // 1. Get the user ID from the token
+    const token = req.cookies.token; 
+    let userId = null;
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        userId = decoded.id; // Ensure your JWT payload uses 'id'
+      } catch (err) { /* invalid token */ }
+    }
 
-    // 01. Title Search
+    // 2. BASE QUERY: (Open Gigs) OR (Gigs I own) OR (Gigs I'm hired for)
+    let mongoQuery = {
+      $or: [
+        { status: "open" },
+        ...(userId ? [
+          { ownerId: new mongoose.Types.ObjectId(userId) }, 
+          { hiredFreelancer: new mongoose.Types.ObjectId(userId) }
+        ] : [])
+      ]
+    };
+
+    // 3. APPLY ADDITIONAL FILTERS
+    // We wrap these in an 'AND' condition so they apply TO the results of the $or
+    const filters = [];
+
     if (search) {
-      mongoQuery.title = { $regex: search, $options: "i" };
+      filters.push({ title: { $regex: search, $options: "i" } });
     }
   
-    // 02. Budget Logic (Converts URL strings to Numbers)
     if (min || max) {
-      mongoQuery.budget = {};
-      if (min) mongoQuery.budget.$gte = Number(min);
-      if (max) mongoQuery.budget.$lte = Number(max);
+      let budgetFilter = {};
+      if (min) budgetFilter.$gte = Number(min);
+      if (max) budgetFilter.$lte = Number(max);
+      filters.push({ budget: budgetFilter });
     }
 
-    // 03. Category Logic (Handles the "+" and spaces from URL)
     if (cats) {
-      // Splits the comma-separated string from your frontend into an array
       const categoryArray = decodeURIComponent(cats).split(',');
-      mongoQuery.category = { $in: categoryArray };
+      filters.push({ category: { $in: categoryArray } });
     }
 
-    // 04. Security Toggle (Checks your new schema field)
     if (verified === "true") {
-      mongoQuery.isVerifiedClient = true;
+      filters.push({ isVerifiedClient: true });
+    }
+
+    // If we have additional filters, merge them with the base $or query
+    if (filters.length > 0) {
+      mongoQuery = { $and: [ { $or: mongoQuery.$or }, ...filters ] };
     }
 
     const results = await Gig.find(mongoQuery).sort({ createdAt: -1 });
     res.json(results);
+
   } catch (err) {
-    console.error("FILTER ERROR:", err);
+    console.error("DASHBOARD FETCH ERROR:", err);
     res.status(500).json({ message: "Server error during filtering" });
   }
 });
-
 // GET SINGLE GIG
 router.get("/:id", async (req, res) => {
   try {
