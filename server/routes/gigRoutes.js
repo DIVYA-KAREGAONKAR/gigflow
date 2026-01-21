@@ -6,7 +6,17 @@ const mongoose = require("mongoose");
 
 // server/routes/gigs.js
 const jwt = require('jsonwebtoken'); // Ensure you have this to check the token
+// server/routes/gigRoutes.js
+const Message = require("../models/Message");
 
+router.get("/:id/messages", async (req, res) => {
+  try {
+    const messages = await Message.find({ gigId: req.params.id }).sort({ createdAt: 1 });
+    res.json(messages);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch messages" });
+  }
+});
 router.get("/", async (req, res) => {
   try {
     const { search, min, max, verified, cats } = req.query;

@@ -13,6 +13,7 @@ export default function Workspace() {
   const socket = useRef(null);
 
   useEffect(() => {
+      useEffect(() => {
     const fetchData = async () => {
       try {
         const gigRes = await api.get(`/gigs/${id}`);
@@ -23,6 +24,31 @@ export default function Workspace() {
         console.error("Data fetch error", err);
       }
     };
+    fetchData();
+
+    // Initialize Socket
+    socket.current = io("https://gigflow-dzfl.onrender.com", {
+      transports: ["websocket", "polling"],
+      withCredentials: true
+    });
+
+    // ✅ JOIN ROOM - Listen for 'connect' event first to ensure we are ready
+    socket.current.on("connect", () => {
+      console.log("Connected to Socket Server");
+      socket.current.emit("join_workspace", id);
+    });
+
+    // ✅ RECEIVE MESSAGE - Listener
+    socket.current.on("receive_message", (data) => {
+      console.log("New message from server:", data);
+      // Only add if the sender is NOT the current user (to avoid duplicates)
+      setMessages((prev) => [...prev, data]);
+    });
+
+    return () => {
+      if (socket.current) socket.current.disconnect();
+    };
+  }, [id]);
     fetchData();
 
     // Initialize Socket
