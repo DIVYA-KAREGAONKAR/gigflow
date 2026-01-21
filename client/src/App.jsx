@@ -11,6 +11,7 @@ import ViewBids from "./pages/ViewBids";
 import Register from "./pages/Register";
 import AddGig from "./pages/AddGig";
 import Workspace from "./pages/Workspace";
+import Dashboard from "./pages/Dashboard";
 
 
 export default function App() {
@@ -24,6 +25,7 @@ export default function App() {
         <Route path="/gigs/:gigId/bids" element={<ViewBids />} />
        <Route path="/add-gig" element={<AddGig />} />
        <Route path="/workspace/:id" element={<Workspace />} />
+       <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
   );
 }

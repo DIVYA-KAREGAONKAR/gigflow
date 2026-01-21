@@ -75,9 +75,11 @@ io.on("connection", (socket) => {
 
   // 03. Handle Real-time Chat Messaging
   // server/server.js
+// server/server.js inside io.on("connection")
+
 socket.on("send_message", async (data) => {
   try {
-    // 1. SAVE TO DATABASE
+    // 1. Save to Database
     const newMessage = new Message({
       gigId: data.gigId,
       sender: data.senderName,
@@ -86,15 +88,26 @@ socket.on("send_message", async (data) => {
     });
     await newMessage.save();
 
-    // 2. BROADCAST TO OTHERS IN THE ROOM
-    // socket.to(id) sends to everyone EXCEPT the sender
+    // 2. Broadcast to the Room (for users already inside the workspace)
     socket.to(data.gigId).emit("receive_message", {
       sender: data.senderName,
       text: data.text,
       time: data.time
     });
+
+    // 3. SEND GLOBAL NOTIFICATION
+    // We need to know who the "other" person is. 
+    // Usually, you'd pass the recipientId from the frontend in the 'data' object.
+    if (data.recipientId && activeUsers[data.recipientId]) {
+        io.to(activeUsers[data.recipientId]).emit("notification", {
+            type: "NEW_MESSAGE",
+            message: `New message from ${data.senderName}`,
+            gigId: data.gigId,
+            text: data.text.substring(0, 30) + "..." // Preview
+        });
+    }
   } catch (err) {
-    console.error("Msg save error:", err);
+    console.error("Notification Error:", err);
   }
 });
 

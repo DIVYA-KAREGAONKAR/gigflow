@@ -55,31 +55,30 @@ export default function Workspace() {
   }, [id]);
 
   const sendMessage = (e) => {
-    e.preventDefault();
-    if (!input.trim() || !user) return;
+  e.preventDefault();
+  if (!input.trim() || !user || !gig) return;
 
-    const messageTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  // Determine who should receive the notification
+  const recipientId = (user.role === 'client') ? gig.hiredFreelancer : gig.ownerId;
 
-    const messageData = {
-      gigId: id,
-      senderName: user.name,
-      text: input,
-      time: messageTime
-    };
-
-    // 1. Send to server (server will save to DB and broadcast)
-    socket.current.emit("send_message", messageData);
-    
-    // 2. Add to local UI (immediately visible to you)
-    setMessages((prev) => [...prev, {
-      sender: user.name, 
-      text: input,
-      time: messageTime
-    }]);
-
-    setInput("");
+  const messageData = {
+    gigId: id,
+    recipientId: recipientId, // Add this
+    senderName: user.name,
+    text: input,
+    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   };
 
+  socket.current.emit("send_message", messageData);
+  
+  setMessages((prev) => [...prev, {
+    sender: user.name, 
+    text: input,
+    time: messageData.time
+  }]);
+
+  setInput("");
+};
   if (!gig) return <div className="p-20 text-center font-black italic">Loading Workspace...</div>;
 
   return (

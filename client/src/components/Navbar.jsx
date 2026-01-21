@@ -44,6 +44,37 @@ export default function Navbar() {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (user?._id) {
+      const socket = io("https://gigflow-dzfl.onrender.com");
+      
+      // Register this user to receive global events
+      socket.emit("register", user._id);
+
+      socket.on("notification", (data) => {
+        if (data.type === "NEW_MESSAGE") {
+          toast((t) => (
+            <span className="flex flex-col">
+              <b className="text-xs uppercase font-black">New Message</b>
+              <span className="text-sm italic text-slate-600">{data.message}</span>
+              <button 
+                onClick={() => {
+                    window.location.href = `/workspace/${data.gigId}`;
+                    toast.dismiss(t.id);
+                }}
+                className="mt-2 text-[10px] bg-slate-900 text-white px-3 py-1 rounded font-bold uppercase"
+              >
+                View Chat
+              </button>
+            </span>
+          ), { duration: 5000, position: 'top-right' });
+        }
+      });
+
+      return () => socket.disconnect();
+    }
+  }, [user]);
+
   const logout = () => {
     localStorage.removeItem("user");
     setUser(null);
@@ -66,7 +97,11 @@ export default function Navbar() {
         <Link to="/" className="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors">
           Browse Gigs
         </Link>
-
+      {user && (
+    <Link to="/dashboard" className="text-xs font-black uppercase tracking-widest text-slate-600 hover:text-indigo-600 transition-all">
+      My Dashboard
+    </Link>
+  )}
         {user ? (
           <div className="flex items-center gap-6">
             {user.role === "client" && (
