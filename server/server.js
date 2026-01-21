@@ -5,7 +5,7 @@ const cookieParser = require("cookie-parser");
 const http = require("http");
 const { Server } = require("socket.io");
 require("dotenv").config();
-
+const Message = require("./models/Message");
 // Route Imports
 const aiRoutes = require("./routes/ai"); 
 const authRoutes = require("./routes/authRoutes");
