@@ -13,41 +13,62 @@ export default function Workspace() {
   const socket = useRef(null);
 
   useEffect(() => {
-    // 1. Fetch Gig and User details
-    const fetchData = async () => {
+  const fetchData = async () => {
+    try {
       const gigRes = await api.get(`/gigs/${id}`);
       const userRes = await api.get("/auth/me");
       setGig(gigRes.data);
       setUser(userRes.data);
-    };
-    fetchData();
-
-    // 2. Initialize Socket Connection
-    socket.current = io("http://localhost:5000"); // Your backend URL
-    socket.current.emit("join_room", id); // Join a room unique to this project
-
-    socket.current.on("receive_message", (data) => {
-      setMessages((prev) => [...prev, data]);
-    });
-
-    return () => socket.current.disconnect();
-  }, [id]);
-
-  const sendMessage = (e) => {
-    e.preventDefault();
-    if (!input.trim()) return;
-
-    const messageData = {
-      room: id,
-      sender: user.name,
-      text: input,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-
-    socket.current.emit("send_message", messageData);
-    setMessages((prev) => [...prev, messageData]);
-    setInput("");
+    } catch (err) {
+      console.error("Data fetch error", err);
+    }
   };
+  fetchData();
+
+  // 1. Correct Backend URL (Use env variable if possible)
+  socket.current = io("http://localhost:5000", {
+    transports: ["websocket", "polling"],
+    withCredentials: true
+  });
+
+  // 2. ✅ FIX: Must match Backend 'join_workspace'
+  socket.current.emit("join_workspace", id); 
+
+  // 3. ✅ FIX: Listener for incoming messages
+  socket.current.on("receive_message", (data) => {
+    console.log("New message received:", data);
+    setMessages((prev) => [...prev, data]);
+  });
+
+  return () => {
+    socket.current.off("receive_message");
+    socket.current.disconnect();
+  };
+}, [id]);
+
+const sendMessage = (e) => {
+  e.preventDefault();
+  if (!input.trim() || !user) return;
+
+  const messageData = {
+    gigId: id,          // ✅ FIX: Match Backend 'data.gigId'
+    senderName: user.name, // ✅ FIX: Match Backend 'data.senderName'
+    text: input,
+    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  };
+
+  // 4. ✅ FIX: Send to server
+  socket.current.emit("send_message", messageData);
+
+  // Add to local state so sender sees it immediately
+  setMessages((prev) => [...prev, {
+    sender: user.name, // Match the structure used in the map()
+    text: input,
+    time: messageData.time
+  }]);
+  
+  setInput("");
+};
 
   if (!gig) return <div className="p-20 text-center font-black italic">Loading Workspace...</div>;
 
