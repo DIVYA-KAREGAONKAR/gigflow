@@ -15,12 +15,11 @@ const bidRoutes = require("./routes/bidRoutes");
 const app = express();
 const path = require('path');
 
-// Serve the static files from the React build folder
+// 1. Serve static files first
 app.use(express.static(path.join(__dirname, '../client/dist')));
 
-// The "Catch-all" route: sends index.html for any request that doesn't match an API
-// Use this syntax for newer Express/Node versions
-app.get('/*', (req, res) => {
+// 2. The FIX: Use (:splat) to name the wildcard parameter
+app.get('/*splat', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
 // ✅ FIX 1: Trust Proxy (Required for Render/HTTPS cookies)
