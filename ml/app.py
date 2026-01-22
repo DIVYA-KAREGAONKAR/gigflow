@@ -7,6 +7,11 @@ import os
 app = Flask(__name__)
 CORS(app)
 
+# Add this to app.py on Hugging Face
+@app.route('/', methods=['GET'])
+def home():
+    return jsonify({"status": "GigFlow AI Service is Online"})
+
 @app.route('/match', methods=['POST'])
 def match():
     data = request.json
