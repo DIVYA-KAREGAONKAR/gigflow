@@ -42,8 +42,7 @@ export default function GigDetails() {
             return actions.order.create({
               purchase_units: [{ 
                 amount: { 
-                    // PayPal Sandbox works best with USD. 
-                    // If your DB is INR, consider: (gig.budget / 80).toFixed(2)
+                    currency_code: "USD", // Ensure USD for Sandbox stability
                     value: gig.budget.toString() 
                 } 
               }]
@@ -57,10 +56,14 @@ export default function GigDetails() {
                     paypalOrderId: order.id 
                 });
                 toast.success("Payment Successful! Project is now HIRED.");
-                window.location.reload();
+                setTimeout(() => window.location.reload(), 1500);
             } catch (err) {
                 toast.error("Payment recorded but database update failed.");
             }
+          }}
+          onError={(err) => {
+            console.error("PayPal Error:", err);
+            toast.error("PayPal failed to load. Please check your connection.");
           }}
         />
       </div>
@@ -103,6 +106,20 @@ export default function GigDetails() {
     }
   };
 
+  // --- 5. RELEASE PAYMENT LOGIC ---
+  const handleRelease = async () => {
+    try {
+      setLoading(true);
+      await api.post("/gigs/release-payment", { gigId: gig._id });
+      toast.success("Funds released to freelancer!");
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (err) {
+      toast.error("Release failed. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!gig) return (
     <div className="h-screen flex items-center justify-center bg-white font-black italic tracking-widest text-slate-200 uppercase">
       Initialising Intelligence...
@@ -116,7 +133,7 @@ export default function GigDetails() {
       
       <div className="flex flex-col lg:flex-row min-h-[calc(100vh-64px)]">
         
-        {/* LEFT PANEL: Project Brief */}
+        {/* LEFT PANEL */}
         <div className="lg:w-3/5 p-8 lg:p-20 bg-white border-r border-slate-100 flex flex-col justify-center">
           <Link to="/" className="text-xs font-black uppercase tracking-widest text-indigo-600 hover:text-slate-900 transition-colors mb-12 block italic">
             ← Return to Marketplace
@@ -155,15 +172,14 @@ export default function GigDetails() {
           </div>
         </div>
 
-        {/* RIGHT PANEL: Interaction (The Dynamic Part) */}
+        {/* RIGHT PANEL */}
         <div className="lg:w-2/5 bg-[#f8fafc] p-8 lg:p-20 flex flex-col justify-center overflow-y-auto">
           
-          {/* 1. VIEW FOR CLIENT (OWNER) */}
           {user && gig.ownerId && String(user._id) === String(gig.ownerId) ? (
             <div className="space-y-8">
               <div className="text-center lg:text-left">
                 <h2 className="text-3xl font-black text-slate-900 italic mb-2 tracking-tighter">Project Control.</h2>
-                <p className="text-slate-500 font-medium">Manage the lifecycle of this intelligence contract.</p>
+                <p className="text-slate-500 font-medium text-sm">Manage the lifecycle of this intelligence contract.</p>
               </div>
 
               {gig.status === "open" ? (
@@ -174,12 +190,10 @@ export default function GigDetails() {
                   >
                     Analyze All Bids →
                   </Link>
-
                   <div className="relative py-4">
                     <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-200"></span></div>
                     <div className="relative flex justify-center text-[10px] uppercase font-black text-slate-400 bg-[#f8fafc] px-4 italic">OR DIRECT HIRE</div>
                   </div>
-
                   <PaymentSection gig={gig} />
                 </div>
               ) : gig.status === "hired" ? (
@@ -189,92 +203,64 @@ export default function GigDetails() {
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-600"></span>
                     </span>
-                    <span className="text-xs font-black uppercase tracking-widest">Awaiting Deliverables</span>
+                    <span className="text-xs font-black uppercase tracking-widest">Active Escrow</span>
                   </div>
-                  <p className="text-slate-600 text-sm font-medium">Funds are held in GigFlow Escrow. Release them once the freelancer provides the work.</p>
+                  <p className="text-slate-600 text-sm font-medium">Funds are held in GigFlow Escrow. Release them once the work is delivered.</p>
                   <button 
-                    onClick={async () => {
-                        try {
-                            await api.post("/gigs/pay-success", { gigId: gig._id, status: "completed" });
-                            toast.success("Payment Released to Freelancer!");
-                            window.location.reload();
-                        } catch(e) { toast.error("Release failed"); }
-                    }}
-                    className="w-full bg-emerald-600 text-white font-black py-5 rounded-2xl shadow-lg hover:bg-emerald-700 transition-all uppercase tracking-widest text-xs"
+                    onClick={handleRelease}
+                    disabled={loading}
+                    className="w-full bg-emerald-600 text-white font-black py-5 rounded-2xl shadow-lg hover:bg-emerald-700 transition-all uppercase tracking-widest text-xs disabled:opacity-50"
                   >
-                    Release Payment →
+                    {loading ? "Processing..." : `Release ₹${gig.budget} →`}
                   </button>
                 </div>
               ) : (
                 <div className="p-12 border-4 border-dashed border-slate-200 rounded-[3rem] text-center">
-                    <p className="text-slate-300 font-black uppercase italic tracking-[0.2em]">Contract Finalized</p>
+                    <p className="text-slate-300 font-black uppercase italic tracking-[0.2em]">Contract Completed</p>
                 </div>
               )}
             </div>
 
-          /* 2. VIEW FOR FREELANCER (BIDDING) */
           ) : user?.role === "freelancer" && gig.status === "open" ? (
             <form onSubmit={submitBid} className="space-y-8">
-              <div>
-                <h2 className="text-3xl font-black text-slate-900 italic mb-2 tracking-tighter">Draft Proposal.</h2>
-                <p className="text-slate-500 font-medium">Secure this contract with your unique expertise.</p>
-              </div>
-
+              <h2 className="text-3xl font-black text-slate-900 italic mb-2 tracking-tighter">Draft Proposal.</h2>
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-900 uppercase tracking-tighter italic">01. Your Quote (₹)</label>
-                <div className="relative">
-                  <span className="absolute left-0 bottom-4 text-2xl font-black text-slate-300 italic font-serif">₹</span>
-                  <input 
-                    type="number" 
-                    className="w-full bg-transparent border-b-2 border-slate-200 py-4 pl-8 text-3xl font-black focus:border-indigo-600 focus:outline-none transition-all" 
-                    value={bid.price} 
-                    onChange={(e) => setBid({ ...bid, price: e.target.value })} 
-                  />
-                </div>
+                <label className="text-[10px] font-black text-slate-900 uppercase italic">01. Your Quote (₹)</label>
+                <input 
+                  type="number" 
+                  className="w-full bg-transparent border-b-2 border-slate-200 py-4 text-3xl font-black focus:border-indigo-600 outline-none" 
+                  value={bid.price} 
+                  onChange={(e) => setBid({ ...bid, price: e.target.value })} 
+                />
               </div>
-
               <div className="bg-indigo-50/50 p-6 rounded-3xl border border-indigo-100 space-y-4">
-                <label className="text-[10px] font-black text-indigo-900 uppercase tracking-widest italic flex items-center gap-2">✨ AI Proposal Assistant</label>
+                <label className="text-[10px] font-black text-indigo-900 uppercase italic">✨ AI Assistant</label>
                 <input 
                   type="text"
-                  placeholder="Skills (e.g. React, Python)..."
-                  className="w-full bg-white border border-indigo-100 p-4 rounded-xl text-sm font-bold focus:border-indigo-600 outline-none"
+                  placeholder="Skills (React, Node)..."
+                  className="w-full p-4 rounded-xl text-sm font-bold border border-indigo-100 outline-none"
                   value={customSkills}
                   onChange={(e) => setCustomSkills(e.target.value)}
                 />
-                <button
-                  type="button"
-                  onClick={generateAIProposal}
-                  disabled={isGenerating}
-                  className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black text-[10px] uppercase tracking-widest"
-                >
-                  {isGenerating ? "Synthesizing..." : "Auto-Generate Pitch"}
+                <button type="button" onClick={generateAIProposal} disabled={isGenerating} className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black text-[10px] uppercase">
+                  {isGenerating ? "Synthesizing..." : "Generate Pitch"}
                 </button>
               </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-900 uppercase tracking-tighter italic">02. Message</label>
-                <textarea 
-                  className="w-full bg-white border border-slate-200 p-6 rounded-2xl text-lg font-medium outline-none focus:border-indigo-600 transition-all resize-none" 
-                  rows="5" 
-                  value={bid.message} 
-                  onChange={(e) => setBid({ ...bid, message: e.target.value })} 
-                />
-              </div>
-
-              <button type="submit" disabled={loading} className="w-full bg-slate-900 text-white font-black py-6 rounded-2xl uppercase tracking-widest text-sm shadow-2xl">
+              <textarea 
+                className="w-full bg-white border border-slate-200 p-6 rounded-2xl text-lg font-medium outline-none focus:border-indigo-600" 
+                rows="5" 
+                value={bid.message} 
+                onChange={(e) => setBid({ ...bid, message: e.target.value })} 
+              />
+              <button type="submit" disabled={loading} className="w-full bg-slate-900 text-white font-black py-6 rounded-2xl uppercase tracking-widest shadow-2xl">
                 {loading ? "Transmitting..." : "Send Proposal"}
               </button>
             </form>
-
-          /* 3. VIEW FOR GUESTS / OTHER STATUSES */
           ) : (
             <div className="text-center p-12 bg-white rounded-[2rem] border border-slate-100 shadow-sm">
-              <p className="text-slate-400 font-black uppercase tracking-widest mb-4 italic">Notice</p>
-              <p className="text-slate-600 font-bold mb-8">
+              <p className="text-slate-600 font-bold">
                 {gig.status !== "open" ? "This project is no longer accepting bids." : "Sign in as a freelancer to bid."}
               </p>
-              {gig.status === "open" && <Link to="/login" className="text-indigo-600 font-black uppercase tracking-widest text-xs hover:underline">Go to Portal →</Link>}
             </div>
           )}
         </div>
