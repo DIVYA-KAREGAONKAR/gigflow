@@ -14,6 +14,21 @@ const axios = require('axios');
 
 const ML_URL = "https://divyakaregaonkar-gigflow.hf.space/match";
 
+// server/routes/gigRoutes.js
+router.post("/pay-success", async (req, res) => {
+  const { gigId, paypalOrderId } = req.body;
+  try {
+    const updatedGig = await Gig.findByIdAndUpdate(
+      gigId,
+      { status: "hired", paymentId: paypalOrderId },
+      { new: true }
+    );
+    res.status(200).json(updatedGig);
+  } catch (error) {
+    res.status(500).json({ message: "Database update failed" });
+  }
+});
+
 const getMatchScore = async (user, gig) => {
     try {
         const response = await axios.post(ML_URL, {
