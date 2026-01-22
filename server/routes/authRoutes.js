@@ -19,11 +19,12 @@ router.get("/me", auth, async (req, res) => {
 });
 
 /* =====================
-   REGISTER
+   REGISTER (Updated for AI Smart Match)
 ===================== */
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    // 1. Destructure the new fields from req.body
+    const { name, email, password, role, skills, bio } = req.body;
 
     if (!name || !email || !password || !role) {
       return res.status(400).json({ message: "All fields required" });
@@ -36,11 +37,16 @@ router.post("/register", async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // 2. Include skills and bio in the creation process
+    // Note: 'skills' should already be an array if your React frontend 
+    // did the .split(",") conversion we discussed.
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
       role,
+      skills: skills || [], // Default to empty array if none provided
+      bio: bio || ""        // Default to empty string
     });
 
     res.status(201).json({ message: "Registered successfully" });

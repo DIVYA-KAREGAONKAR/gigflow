@@ -16,7 +16,7 @@ const app = express();
 
 // ✅ FIX 1: Trust Proxy (Required for Render/HTTPS cookies)
 app.set("trust proxy", 1); 
-
+app.set('etag', false);
 const server = http.createServer(app);
 
 // ✅ Define Allowed Origins

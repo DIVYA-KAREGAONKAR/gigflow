@@ -19,6 +19,15 @@ const userSchema = new mongoose.Schema({
     enum: ["client", "freelancer"],
     required: true,
   },
-});
+  // --- NEW FIELDS FOR ML MATCHING ---
+  skills: {
+    type: [String], // Array of strings e.g., ["React", "Node.js", "Python"]
+    default: []
+  },
+  bio: {
+    type: String,
+    default: ""
+  }
+}, { timestamps: true });
 
 module.exports = mongoose.model("User", userSchema);

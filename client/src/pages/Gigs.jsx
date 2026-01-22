@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import api from "../utils/axios";
 import Navbar from "../components/Navbar";
 import { Link } from "react-router-dom";
-import { toast, Toaster } from "react-hot-toast"; // Added Toaster for feedback
+import { toast, Toaster } from "react-hot-toast";
 
 export default function Gigs() {
   const [gigs, setGigs] = useState([]);
-  const [user, setUser] = useState(null); // NEW: State to hold current user info
+  const [user, setUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
     categories: [],
@@ -15,12 +15,19 @@ export default function Gigs() {
     verifiedOnly: false
   });
 
-  // --- NEW: FETCH CURRENT USER ON LOAD ---
+  // --- 1. FETCH CURRENT USER ---
   useEffect(() => {
     api.get("/auth/me")
       .then((res) => setUser(res.data))
       .catch(() => setUser(null));
   }, []);
+
+  // --- 2. AI MATCH STYLING HELPER ---
+  const getMatchStyles = (score) => {
+    if (score >= 85) return { color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', label: 'High Match' };
+    if (score >= 60) return { color: 'text-indigo-700', bg: 'bg-indigo-50', border: 'border-indigo-200', label: 'Good Match' };
+    return { color: 'text-slate-500', bg: 'bg-slate-50', border: 'border-slate-200', label: 'Skill Gap' };
+  };
 
   const clearFilters = () => {
     setSearchTerm("");
@@ -33,6 +40,7 @@ export default function Gigs() {
     toast.success("Filters reset to default");
   };
 
+  // --- 3. FETCH GIGS (Includes your search and filters) ---
   useEffect(() => {
     const fetchGigs = async () => {
       try {
@@ -44,7 +52,8 @@ export default function Gigs() {
           cats: filters.categories.join(',') 
         }).toString();
         
-        const res = await api.get(`/gigs?${query}`);
+       // Gigs.jsx
+const res = await api.get(`/gigs?${query}&t=${new Date().getTime()}`);
         setGigs(res.data);
       } catch (err) {
         console.error("Error fetching filtered gigs:", err);
@@ -58,11 +67,11 @@ export default function Gigs() {
   return (
     <div className="min-h-screen bg-[#f8fafc] selection:bg-indigo-100">
       <Navbar />
-      <Toaster /> {/* NEW: Added Toaster component for notifications */}
+      <Toaster />
 
       <div className="max-w-[1600px] mx-auto px-6 lg:px-12 py-16">
         
-        {/* --- HEADER SECTION --- */}
+        {/* HEADER SECTION */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-16">
           <div className="max-w-2xl">
             <h2 className="text-6xl font-black tracking-tighter text-slate-900 leading-[0.9] mb-4">
@@ -91,10 +100,9 @@ export default function Gigs() {
       
         <div className="flex flex-col lg:flex-row gap-12">
           
+          {/* SIDEBAR FILTERS */}
           <aside className="hidden lg:block w-72 flex-shrink-0 sticky top-24 h-fit">
             <div className="space-y-12">
-              
-              {/* Sidebar Header with Clear All Button */}
               <div className="flex items-center justify-between">
                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 italic">Filters</h3>
                 <button 
@@ -108,7 +116,6 @@ export default function Gigs() {
                 </button>
               </div>
 
-              {/* Industry Filter */}
               <div>
                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 italic mb-6">01. Industry</h3>
                 <div className="space-y-4">
@@ -131,9 +138,8 @@ export default function Gigs() {
                 </div>
               </div>
 
-              {/* Budget Range */}
               <div>
-                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 italic mb-6">02. Budget Range</h3>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 italic mb-6">02. Budget</h3>
                 <div className="flex gap-4 items-center">
                   <div className="relative flex-1">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 italic font-serif">₹</span>
@@ -159,7 +165,6 @@ export default function Gigs() {
                 </div>
               </div>
 
-              {/* Security */}
               <div>
                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 italic mb-6">03. Security</h3>
                 <label className="flex items-center justify-between group cursor-pointer">
@@ -178,49 +183,66 @@ export default function Gigs() {
             </div>
           </aside>
 
-          {/* 2. DYNAMIC GIG GRID (Public View: Only shows 'open' gigs) */}
+          {/* DYNAMIC GIG GRID */}
           <div className="flex-1">
             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 italic mb-8">Global Intel Feed</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-              {/* Filter the main grid to ONLY show 'open' gigs to the public */}
               {gigs.filter(g => g.status === "open").length > 0 ? (
-                gigs.filter(g => g.status === "open").map((gig) => (
-                  <div key={gig._id} className="group relative bg-white border border-slate-100 p-8 rounded-[2.5rem] hover:shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-2 transition-all duration-500 flex flex-col justify-between min-h-[420px]">
-                    <div>
-                      <div className="flex justify-between items-start mb-6">
-                        <div className="h-12 w-12 bg-slate-50 rounded-2xl flex items-center justify-center text-xl font-black text-slate-300 group-hover:text-indigo-500 transition-colors">GF</div>
-                        <div className="flex flex-col items-end gap-2">
-                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 italic">Active Now</span>
-                          {gig.isVerifiedClient && (
-                            <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 shadow-sm">
-                              Verified Client
-                            </span>
-                          )}
+                gigs.filter(g => g.status === "open").map((gig) => {
+                  const styles = getMatchStyles(gig.matchScore || 0);
+                  
+                  return (
+                    <div key={gig._id} className="group relative bg-white border border-slate-100 p-8 rounded-[2.5rem] hover:shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-2 transition-all duration-500 flex flex-col justify-between min-h-[450px]">
+                      <div>
+                        <div className="flex justify-between items-start mb-6">
+                          <div className="h-12 w-12 bg-slate-50 rounded-2xl flex items-center justify-center text-xl font-black text-slate-300 group-hover:text-indigo-500 transition-colors">GF</div>
+                          
+                          {/* BADGE SECTION (AI + VERIFIED) */}
+                          <div className="flex flex-col items-end gap-2">
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 italic">Active Now</span>
+                            
+                            {/* --- SMART MATCH BADGE --- */}
+                            {user && gig.matchScore !== undefined && (
+                              <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg border shadow-sm transition-all animate-pulse ${styles.bg} ${styles.color} ${styles.border}`}>
+                                <span className="relative flex h-1.5 w-1.5">
+                                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-current`}></span>
+                                  <span className={`relative inline-flex rounded-full h-1.5 w-1.5 bg-current`}></span>
+                                </span>
+                                AI: {gig.matchScore}% {styles.label}
+                              </div>
+                            )}
+
+                            {gig.isVerifiedClient && (
+                              <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 shadow-sm">
+                                Verified Client
+                              </span>
+                            )}
+                          </div>
                         </div>
+                        
+                        <h3 className="text-2xl font-black text-slate-900 leading-tight mb-3 group-hover:text-indigo-600 transition-colors italic">
+                          {gig.title}
+                        </h3>
+                        <p className="text-slate-500 text-sm leading-relaxed mb-8 line-clamp-3 font-medium">
+                          {gig.description}
+                        </p>
                       </div>
                       
-                      <h3 className="text-2xl font-black text-slate-900 leading-tight mb-3 group-hover:text-indigo-600 transition-colors italic">
-                        {gig.title}
-                      </h3>
-                      <p className="text-slate-500 text-sm leading-relaxed mb-8 line-clamp-3 font-medium">
-                        {gig.description}
-                      </p>
-                    </div>
-                    
-                    <div className="flex justify-between items-center pt-8 border-t border-slate-50 mt-auto">
-                      <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 italic">Budget</p>
-                        <p className="text-2xl font-black text-slate-900 tracking-tighter italic">₹{gig.budget}</p>
+                      <div className="flex justify-between items-center pt-8 border-t border-slate-50 mt-auto">
+                        <div>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 italic">Budget</p>
+                          <p className="text-2xl font-black text-slate-900 tracking-tighter italic">₹{gig.budget}</p>
+                        </div>
+                        <Link 
+                          to={`/gigs/${gig._id}`} 
+                          className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-600 shadow-lg active:scale-95 transition-all"
+                        >
+                          View
+                        </Link>
                       </div>
-                      <Link 
-                        to={`/gigs/${gig._id}`} 
-                        className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-600 shadow-lg active:scale-95 transition-all"
-                      >
-                        View
-                      </Link>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="col-span-full py-24 text-center border-2 border-dashed border-slate-200 rounded-[3rem] font-black text-slate-400 uppercase tracking-widest text-sm italic bg-slate-50/30">
                   No Intel Found

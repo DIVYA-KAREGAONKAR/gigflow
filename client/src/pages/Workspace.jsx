@@ -54,6 +54,9 @@ export default function Workspace() {
     };
   }, [id]);
 
+
+
+
   const sendMessage = (e) => {
   e.preventDefault();
   if (!input.trim() || !user || !gig) return;
@@ -124,7 +127,40 @@ export default function Workspace() {
             Send
           </button>
         </form>
+
+        // --- THE UI PART (Inside the return JSX) ---
+{user?.role === "client" && gig.status === "hired" && (
+  <div className="mt-6 p-6 bg-indigo-50 border-2 border-indigo-200 rounded-[2rem] flex items-center justify-between">
+    <div>
+      <h3 className="text-lg font-black text-indigo-900 uppercase italic">Release Payment</h3>
+      <p className="text-xs font-bold text-indigo-600 mt-1 uppercase tracking-widest">
+        Release ₹{gig.budget} to the freelancer once the work is complete.
+      </p>
+    </div>
+    <button 
+      onClick={handlePayment}
+      className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition-all active:scale-95"
+    >
+      Pay Now →
+    </button>
+  </div>
+)}
       </div>
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
