@@ -15,10 +15,10 @@ const bidRoutes = require("./routes/bidRoutes");
 const app = express();
 const path = require('path');
 
-// 1. Serve static files first
+// Go up one level from 'server' folder, then into 'client/dist'
 app.use(express.static(path.join(__dirname, '../client/dist')));
 
-// 2. The FIX: Use (:splat) to name the wildcard parameter
+// Use the named wildcard for Node v22 compatibility
 app.get('/*splat', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
