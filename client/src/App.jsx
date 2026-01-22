@@ -22,6 +22,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/gigs/:id" element={<GigDetails />} />
+        <Route path="/view-bids/:gigId" element={<ViewBids />} />
         <Route path="/gigs/:gigId/bids" element={<ViewBids />} />
        <Route path="/add-gig" element={<AddGig />} />
        <Route path="/workspace/:id" element={<Workspace />} />
