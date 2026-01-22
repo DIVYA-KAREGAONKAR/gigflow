@@ -16,19 +16,27 @@ export default function Workspace() {
 
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        const gigRes = await api.get(`/gigs/${id}`);
-        const userRes = await api.get("/auth/me");
-        const msgRes = await api.get(`/gigs/${id}/messages`);
-        
-        setGig(gigRes.data);
-        setUser(userRes.data);
-        setMessages(msgRes.data);
-      } catch (err) {
-        console.error("Data fetch error", err);
+    try {
+      const gigRes = await api.get(`/gigs/${id}`);
+      
+      // FIX: Check if gig is 'hired' OR 'completed'
+      if (gigRes.data.status !== "hired" && gigRes.data.status !== "completed") {
+         toast.error("This workspace is not active.");
+         // navigate("/") // Optional: send them back to dashboard
+         return;
       }
-    };
-    fetchData();
+
+      const userRes = await api.get("/auth/me");
+      const msgRes = await api.get(`/gigs/${id}/messages`);
+      
+      setGig(gigRes.data);
+      setUser(userRes.data);
+      setMessages(msgRes.data);
+    } catch (err) {
+      console.error("Data fetch error", err);
+    }
+  };
+  fetchData();
 
     socket.current = io("https://gigflow-dzfl.onrender.com", {
       transports: ["websocket", "polling"],
@@ -53,17 +61,20 @@ export default function Workspace() {
 
   // NEW: Handle final funds release
   const handleRelease = async () => {
-    try {
-      setLoading(true);
-      await api.post("/gigs/release-payment", { gigId: gig._id });
-      toast.success("Funds released successfully!");
-      setTimeout(() => window.location.reload(), 1500);
-    } catch (err) {
-      toast.error("Failed to release funds.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    setLoading(true);
+    await api.post("/gigs/release-payment", { gigId: gig._id });
+    toast.success("Funds released! Project is now complete.");
+    
+    // INSTEAD OF RELOAD: Just update the local gig status
+    setGig(prev => ({ ...prev, status: "completed" })); 
+    
+  } catch (err) {
+    toast.error("Release failed. Check server logs.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const sendMessage = (e) => {
     e.preventDefault();
