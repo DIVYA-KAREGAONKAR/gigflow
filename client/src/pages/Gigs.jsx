@@ -22,12 +22,27 @@ export default function Gigs() {
       .catch(() => setUser(null));
   }, []);
 
-  // --- 2. AI MATCH STYLING HELPER ---
   const getMatchStyles = (score) => {
-    if (score >= 85) return { color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', label: 'High Match' };
-    if (score >= 60) return { color: 'text-indigo-700', bg: 'bg-indigo-50', border: 'border-indigo-200', label: 'Good Match' };
-    return { color: 'text-slate-500', bg: 'bg-slate-50', border: 'border-slate-200', label: 'Skill Gap' };
+  if (score >= 85) return { 
+    color: 'text-white', 
+    bg: 'bg-emerald-600', 
+    border: 'border-emerald-700', 
+    label: 'Expert Match' 
   };
+  if (score >= 60) return { 
+    color: 'text-white', 
+    bg: 'bg-indigo-600', 
+    border: 'border-indigo-700', 
+    label: 'Strong Match' 
+  };
+  // Amber/Orange for scores below 60% makes them "visible" warnings
+  return { 
+    color: 'text-slate-900', 
+    bg: 'bg-amber-400', 
+    border: 'border-amber-500', 
+    label: 'Partial Match' 
+  };
+};
 
   const clearFilters = () => {
     setSearchTerm("");
@@ -201,16 +216,21 @@ const res = await api.get(`/gigs?${query}&t=${new Date().getTime()}`);
                           <div className="flex flex-col items-end gap-2">
                             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 italic">Active Now</span>
                             
-                            {/* --- SMART MATCH BADGE --- */}
-                            {user && gig.matchScore !== undefined && (
-                              <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg border shadow-sm transition-all animate-pulse ${styles.bg} ${styles.color} ${styles.border}`}>
-                                <span className="relative flex h-1.5 w-1.5">
-                                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-current`}></span>
-                                  <span className={`relative inline-flex rounded-full h-1.5 w-1.5 bg-current`}></span>
-                                </span>
-                                AI: {gig.matchScore}% {styles.label}
-                              </div>
-                            )}
+                            {/* --- IMPROVED SMART MATCH BADGE --- */}
+{user && gig.matchScore !== undefined && (
+  <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border-b-4 shadow-lg transition-all transform hover:scale-105 ${styles.bg} ${styles.color} ${styles.border}`}>
+    <span className="relative flex h-3 w-3">
+      {/* The pinging dot is now white to be visible against dark backgrounds */}
+      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-white"></span>
+      <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+    </span>
+    <div className="flex flex-col leading-none">
+      <span className="text-[12px] font-black uppercase tracking-tighter">
+        {gig.matchScore}% {styles.label}
+      </span>
+    </div>
+  </div>
+)}
 
                             {gig.isVerifiedClient && (
                               <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 shadow-sm">
