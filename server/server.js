@@ -19,7 +19,8 @@ const path = require('path');
 app.use(express.static(path.join(__dirname, '../client/dist')));
 
 // The "Catch-all" route: sends index.html for any request that doesn't match an API
-app.get('*', (req, res) => {
+// Use this syntax for newer Express/Node versions
+app.get('/*', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
 // ✅ FIX 1: Trust Proxy (Required for Render/HTTPS cookies)
