@@ -3,7 +3,7 @@ const Gig = require("../models/Gig");
 const auth = require("../middleware/authMiddleware");
 const router = express.Router();
 const mongoose = require("mongoose");
-
+const User = require("../models/User");
 // server/routes/gigs.js
 const jwt = require('jsonwebtoken'); // Ensure you have this to check the token
 // server/routes/gigRoutes.js
@@ -12,8 +12,7 @@ const Message = require("../models/Message");
 const axios = require('axios');
 // server/routes/gigRoutes.js
 
-// IMPORTANT: Hugging Face API URLs usually follow this pattern
-const ML_URL = "https://divyakaregaonkar-gigflow-ml.hf.space/match";
+const ML_URL = "https://divyakaregaonkar-gigflow.hf.space/match";
 
 const getMatchScore = async (user, gig) => {
     try {
@@ -22,13 +21,18 @@ const getMatchScore = async (user, gig) => {
             gig_skills: `${gig.title} ${gig.description}`
         }, {
             headers: { 'Content-Type': 'application/json' },
-            timeout: 5000 // Prevents the backend from hanging if HF is sleeping
+            timeout: 15000 // Increased to 15 seconds for cold-starts
         });
 
         return response.data.score || 0;
     } catch (error) {
-        console.error("HF Service Error:", error.message);
-        return 0; // Fallback to 0 so the UI doesn't crash
+        // Log specifically if it was a timeout or a different error
+        if (error.code === 'ECONNABORTED') {
+            console.error(`Timeout: HF Space at ${ML_URL} is taking too long to respond.`);
+        } else {
+            console.error("HF Service Error:", error.message);
+        }
+        return 0; 
     }
 };
 // server/routes/gigs.js
