@@ -39,7 +39,10 @@ export default function GigDetails() {
         <PayPalButtons 
           style={{ layout: "vertical", shape: "pill", height: 45 }}
           createOrder={(data, actions) => {
-            // Convert INR budget to USD for Sandbox stability
+            /**
+             * FIX: PayPal Sandbox India does not support INR domestic transactions.
+             * We convert the budget to USD for the demo to ensure the popup opens.
+             */
             const usdValue = (gig.budget / 80).toFixed(2);
 
             return actions.order.create({
@@ -60,19 +63,22 @@ export default function GigDetails() {
                     paypalOrderId: order.id 
                 });
                 toast.success("Payment Successful! Project is now HIRED.");
-                setTimeout(() => window.location.reload(), 1500);
+                
+                // Redirect to dashboard instead of reload to avoid "Not Found" deep-link issues
+                setTimeout(() => {
+                  window.location.href = "/dashboard";
+                }, 1500);
             } catch (err) {
                 toast.error("Payment recorded but database update failed.");
             }
           }}
           onError={(err) => {
             console.error("PayPal Error:", err);
-            toast.error("PayPal failed to load. Please check your connection.");
+            toast.error("PayPal failed to load. Use an Incognito window.");
           }}
         />
-        {/* Helper text to explain the conversion to the client */}
         <p className="text-[9px] text-slate-400 mt-3 text-center italic font-medium">
-          * Total ₹{gig.budget} converted to approx. ${(gig.budget / 80).toFixed(2)} USD for secure processing.
+          * Total ₹{gig.budget} converted to approx. ${(gig.budget / 80).toFixed(2)} USD for demo processing.
         </p>
       </div>
     );
@@ -193,7 +199,7 @@ export default function GigDetails() {
               {gig.status === "open" ? (
                 <div className="space-y-6">
                   <Link 
-                    to={`/gigs/${gig._id}/bids`} 
+                    to={`/view-bids/${gig._id}`} 
                     className="inline-block w-full bg-slate-900 text-white font-black py-6 rounded-2xl text-center shadow-2xl hover:bg-indigo-600 transition-all uppercase tracking-widest text-sm"
                   >
                     Analyze All Bids →
