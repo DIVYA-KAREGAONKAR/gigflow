@@ -15,6 +15,32 @@ const axios = require('axios');
 const ML_URL = "https://divyakaregaonkar-gigflow.hf.space/match";
 
 // server/routes/gigRoutes.js
+
+router.post("/release-payment", async (req, res) => {
+  const { gigId } = req.body;
+
+  try {
+    // 1. Find the gig and ensure it's currently in 'hired' status
+    const gig = await Gig.findById(gigId);
+    
+    if (!gig) {
+      return res.status(404).json({ message: "Gig not found" });
+    }
+
+    // 2. Update status to 'completed'
+    gig.status = "completed";
+    await gig.save();
+
+    res.status(200).json({ 
+      message: "Funds successfully released to freelancer!", 
+      gig 
+    });
+  } catch (error) {
+    console.error("Release Error:", error);
+    res.status(500).json({ message: "Internal server error during release" });
+  }
+});
+// server/routes/gigRoutes.js
 router.post("/pay-success", async (req, res) => {
   const { gigId, paypalOrderId } = req.body;
   try {
