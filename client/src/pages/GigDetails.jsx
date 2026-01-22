@@ -29,7 +29,7 @@ export default function GigDetails() {
       .catch(() => setUser(null));
   }, []);
 
-  // --- 2. PAYMENT COMPONENT ---
+ // --- 2. PAYMENT COMPONENT ---
   function PaymentSection({ gig }) {
     return (
       <div className="mt-4 p-6 bg-white rounded-3xl border border-slate-100 shadow-xl">
@@ -39,12 +39,16 @@ export default function GigDetails() {
         <PayPalButtons 
           style={{ layout: "vertical", shape: "pill", height: 45 }}
           createOrder={(data, actions) => {
+            // Convert INR budget to USD for Sandbox stability
+            const usdValue = (gig.budget / 80).toFixed(2);
+
             return actions.order.create({
               purchase_units: [{ 
                 amount: { 
-                    currency_code: "USD", // Ensure USD for Sandbox stability
-                    value: gig.budget.toString() 
-                } 
+                    currency_code: "USD", 
+                    value: usdValue 
+                },
+                description: `Escrow for: ${gig.title}`
               }]
             });
           }}
@@ -66,6 +70,10 @@ export default function GigDetails() {
             toast.error("PayPal failed to load. Please check your connection.");
           }}
         />
+        {/* Helper text to explain the conversion to the client */}
+        <p className="text-[9px] text-slate-400 mt-3 text-center italic font-medium">
+          * Total ₹{gig.budget} converted to approx. ${(gig.budget / 80).toFixed(2)} USD for secure processing.
+        </p>
       </div>
     );
   }
