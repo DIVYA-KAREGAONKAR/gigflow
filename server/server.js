@@ -15,13 +15,6 @@ const bidRoutes = require("./routes/bidRoutes");
 const app = express();
 const path = require('path');
 
-// Go up one level from 'server' folder, then into 'client/dist'
-app.use(express.static(path.join(__dirname, '../client/dist')));
-
-// Use the named wildcard for Node v22 compatibility
-app.get('/*splat', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/dist/index.html'));
-});
 // ✅ FIX 1: Trust Proxy (Required for Render/HTTPS cookies)
 app.set("trust proxy", 1); 
 app.set('etag', false);
@@ -139,6 +132,15 @@ app.use("/api/auth", authRoutes);
 app.use("/api/gigs", gigRoutes);
 app.use("/api/bids", bidRoutes);
 
+
+
+// Go up one level from 'server' folder, then into 'client/dist'
+app.use(express.static(path.join(__dirname, '../client/dist')));
+
+// Use the named wildcard for Node v22 compatibility
+app.get('/*splat', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+});
 // --- DATABASE CONNECTION ---
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected to Atlas"))
