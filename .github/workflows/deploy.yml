@@ -1,0 +1,25 @@
+name: GigFlow CD (Separate Services)
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build Check
+        run: |
+          # Verify the Dockerfile for the backend builds correctly
+          docker build -t gigflow-backend-check .
+
+      - name: Trigger Backend Deploy
+        run: |
+          curl -X POST ${{ secrets.BACKEND_DEPLOY_HOOK }}
+
+      - name: Trigger Frontend Deploy
+        run: |
+          curl -X POST ${{ secrets.FRONTEND_DEPLOY_HOOK }}

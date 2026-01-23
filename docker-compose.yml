@@ -1,0 +1,12 @@
+services:
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    # This tells Docker to load variables from your server's .env file
+    env_file:
+      - ./server/.env
+    # For Vite frontend variables (if needed during build)
+    # env_file:
+    #   - ./client/.env
+    restart: always
